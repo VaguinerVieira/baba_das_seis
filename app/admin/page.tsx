@@ -243,7 +243,7 @@ export default function AdminPage() {
                         <td className="px-6 py-4">
                           {a.photoUrl ? (
                             <div className="h-10 w-10 rounded-full overflow-hidden border border-gray-200">
-                              <Image src={a.photoUrl} alt={a.nickname} width={40} height={40} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                              <img src={a.photoUrl} alt={a.nickname} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                             </div>
                           ) : (
                             <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
