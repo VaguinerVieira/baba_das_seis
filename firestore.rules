@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: athletes
+    // Fields:
+    //   - name: string (required)
+    //   - nickname: string (required)
+    //   - number: number (required)
+    //   - birthdayDay: number (required)
+    //   - birthdayMonth: number (required)
+    //   - photoUrl: string (optional)
+    //   - uniformSize: string (optional, enum: P, M, G, GG, XG)
+    //   - paidMonths: list (optional, items: int)
+    //
+    // Collection: transactions
+    // Fields:
+    //   - type: string (required, enum: income, expense)
+    //   - category: string (required)
+    //   - amount: number (required)
+    //   - date: string (required)
+    //   - description: string (optional)
+    //   - athleteId: string (optional)
+    //   - monthYear: string (optional)
+    //
+    // Collection: categories
+    // Fields:
+    //   - name: string (required)
+    //   - type: string (required, enum: income, expense)
+    //
+    // ===============================================================
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == "vaguiner@gmail.com" && request.auth.token.email_verified == true
+      );
+    }
+
+    function isValidAthlete(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.nickname is string && data.nickname.size() > 0 && data.nickname.size() < 50 &&
+             data.number is int &&
+             data.birthdayDay is int && data.birthdayDay >= 1 && data.birthdayDay <= 31 &&
+             data.birthdayMonth is int && data.birthdayMonth >= 1 && data.birthdayMonth <= 12 &&
+             (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() < 500)) &&
+             (!('uniformSize' in data) || (data.uniformSize in ['P', 'M', 'G', 'GG', 'XG'])) &&
+             (!('paidMonths' in data) || (data.paidMonths is list && data.paidMonths.size() <= 12));
+    }
+
+    function isValidTransaction(data) {
+      return data.type in ['income', 'expense'] &&
+             data.category is string && data.category.size() > 0 &&
+             data.amount is number &&
+             data.date is string;
+    }
+
+    function isValidCategory(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.type in ['income', 'expense'];
+    }
+
+    // Athletes collection
+    match /athletes/{athleteId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidAthlete(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Transactions collection
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidTransaction(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Categories collection
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidCategory(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

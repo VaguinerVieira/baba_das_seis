@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cyan-50: #f0f9ff;
+  --color-cyan-100: #e0f2ff;
+  --color-cyan-200: #bae6ff;
+  --color-cyan-300: #7dd3ff;
+  --color-cyan-400: #38bdf8;
+  --color-cyan-500: #0095ff;
+  --color-cyan-600: #0284c7;
+  --color-cyan-700: #0369a1;
+  --color-cyan-800: #075985;
+  --color-cyan-900: #0c4a6e;
+  --color-cyan-950: #082f49;
+}

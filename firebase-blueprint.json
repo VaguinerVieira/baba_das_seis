@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Athlete": {
+      "title": "Athlete",
+      "description": "A player in the Baba das Seis group.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the athlete." },
+        "nickname": { "type": "string", "description": "Common nickname." },
+        "number": { "type": "integer", "description": "Jersey number." },
+        "birthdayDay": { "type": "integer", "description": "Day of the month for birthday." },
+        "birthdayMonth": { "type": "integer", "description": "Month of the year for birthday." },
+        "photoUrl": { "type": "string", "description": "URL of the athlete's photo." },
+        "uniformSize": { "type": "string", "enum": ["P", "M", "G", "GG", "XG"], "description": "Size of the athlete's uniform." },
+        "paidMonths": { "type": "array", "items": { "type": "integer" }, "description": "List of months (1-12) paid by the athlete in the current year." }
+      },
+      "required": ["name", "nickname", "number", "birthdayDay", "birthdayMonth"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A financial income or expense.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "Type of transaction." },
+        "category": { "type": "string", "description": "Category name (e.g., mensalidade, Material Esportivos, Resenha)." },
+        "amount": { "type": "number", "description": "Value of the transaction." },
+        "date": { "type": "string", "format": "date-time", "description": "When it happened." },
+        "description": { "type": "string", "description": "Optional details." },
+        "athleteId": { "type": "string", "description": "Associated athlete ID for monthly fees." },
+        "monthYear": { "type": "string", "description": "Reference month/year (e.g., '03-2026') for fees." }
+      },
+      "required": ["type", "category", "amount", "date"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A transaction category.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the category." },
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "Type of category." }
+      },
+      "required": ["name", "type"]
+    }
+  },
+  "firestore": {
+    "/athletes": {
+      "schema": "Athlete",
+      "description": "Collection of athletes."
+    },
+    "/transactions": {
+      "schema": "Transaction",
+      "description": "Collection of financial transactions."
+    },
+    "/categories": {
+      "schema": "Category",
+      "description": "Collection of transaction categories."
+    }
+  }
+}
