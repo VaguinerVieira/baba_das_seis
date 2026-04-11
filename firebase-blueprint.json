@@ -12,7 +12,9 @@
         "birthdayMonth": { "type": "integer", "description": "Month of the year for birthday." },
         "photoUrl": { "type": "string", "description": "URL of the athlete's photo." },
         "uniformSize": { "type": "string", "enum": ["P", "M", "G", "GG", "XG"], "description": "Size of the athlete's uniform." },
-        "paidMonths": { "type": "array", "items": { "type": "integer" }, "description": "List of months (1-12) paid by the athlete in the current year." }
+        "paidMonths": { "type": "array", "items": { "type": "integer" }, "description": "List of months (1-12) paid by the athlete in the current year." },
+        "isBoardMember": { "type": "boolean", "description": "Whether the athlete is part of the board of directors." },
+        "status": { "type": "string", "enum": ["Ativo", "Inativo", "Afastado"], "description": "Current status of the athlete." }
       },
       "required": ["name", "nickname", "number", "birthdayDay", "birthdayMonth"]
     },

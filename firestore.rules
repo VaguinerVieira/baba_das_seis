@@ -15,6 +15,8 @@ service cloud.firestore {
     //   - photoUrl: string (optional)
     //   - uniformSize: string (optional, enum: P, M, G, GG, XG)
     //   - paidMonths: list (optional, items: int)
+    //   - isBoardMember: boolean (optional)
+    //   - status: string (optional, enum: Ativo, Inativo, Afastado)
     //
     // Collection: transactions
     // Fields:
@@ -52,7 +54,9 @@ service cloud.firestore {
              data.birthdayMonth is int && data.birthdayMonth >= 1 && data.birthdayMonth <= 12 &&
              (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() < 500)) &&
              (!('uniformSize' in data) || (data.uniformSize in ['P', 'M', 'G', 'GG', 'XG'])) &&
-             (!('paidMonths' in data) || (data.paidMonths is list && data.paidMonths.size() <= 12));
+             (!('paidMonths' in data) || (data.paidMonths is list && data.paidMonths.size() <= 12)) &&
+             (!('isBoardMember' in data) || (data.isBoardMember is bool)) &&
+             (!('status' in data) || (data.status in ['Ativo', 'Inativo', 'Afastado']));
     }
 
     function isValidTransaction(data) {
