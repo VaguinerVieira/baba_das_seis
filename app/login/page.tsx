@@ -44,11 +44,11 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div className="mb-4">
             <Image 
-              src="/logo.png" 
+              src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
               alt="Logo Baba das Seis" 
-              width={260} 
-              height={104} 
-              className="h-24 w-auto"
+              width={320} 
+              height={128} 
+              className="h-28 w-auto"
               priority
               referrerPolicy="no-referrer"
             />

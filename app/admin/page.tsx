@@ -156,12 +156,13 @@ export default function AdminPage() {
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30">
         <Image 
-          src="/logo.png" 
+          src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
           alt="Logo Baba das Seis" 
-          width={120} 
-          height={48} 
-          className="h-10 w-auto"
+          width={160} 
+          height={64} 
+          className="h-12 w-auto"
           priority
+          referrerPolicy="no-referrer"
         />
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -175,12 +176,13 @@ export default function AdminPage() {
       <aside className={`w-64 bg-white border-r border-gray-200 flex-col sticky top-0 h-screen z-40 transition-all duration-300 ${isMobileMenuOpen ? 'fixed inset-y-0 left-0 flex shadow-2xl' : 'hidden md:flex'}`}>
         <div className="p-6 border-b border-gray-200 hidden md:flex items-center justify-center">
           <Image 
-            src="/logo.png" 
+            src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
             alt="Logo Baba das Seis" 
-            width={195} 
-            height={78} 
-            className="h-16 w-auto"
+            width={240} 
+            height={96} 
+            className="h-20 w-auto"
             priority
+            referrerPolicy="no-referrer"
           />
         </div>
         <nav className="flex-1 p-4 space-y-2">
