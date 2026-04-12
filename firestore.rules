@@ -25,6 +25,7 @@ service cloud.firestore {
     //   - amount: number (required)
     //   - date: string (required)
     //   - description: string (optional)
+    //   - isMonthlyFee: boolean (optional)
     //   - athleteId: string (optional)
     //   - monthYear: string (optional)
     //
@@ -56,14 +57,18 @@ service cloud.firestore {
              (!('uniformSize' in data) || (data.uniformSize in ['P', 'M', 'G', 'GG', 'XG'])) &&
              (!('paidMonths' in data) || (data.paidMonths is list && data.paidMonths.size() <= 12)) &&
              (!('isBoardMember' in data) || (data.isBoardMember is bool)) &&
-             (!('status' in data) || (data.status in ['Ativo', 'Inativo', 'Afastado']));
+             (!('status' in data) || (data.status in ['Ativo', 'Inativo', 'Afastado'])) &&
+             (!('whatsapp' in data) || (data.whatsapp is string && data.whatsapp.size() < 20));
     }
 
     function isValidTransaction(data) {
       return data.type in ['income', 'expense'] &&
              data.category is string && data.category.size() > 0 &&
              data.amount is number &&
-             data.date is string;
+             data.date is string &&
+             (!('isMonthlyFee' in data) || (data.isMonthlyFee is bool)) &&
+             (!('referenceMonth' in data) || (data.referenceMonth is int || data.referenceMonth is string)) &&
+             (!('athleteId' in data) || (data.athleteId is string));
     }
 
     function isValidCategory(data) {

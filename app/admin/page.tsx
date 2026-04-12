@@ -16,7 +16,8 @@ import {
   where,
   getDocs,
   Timestamp,
-  serverTimestamp
+  serverTimestamp,
+  arrayUnion
 } from 'firebase/firestore';
 import { db, logout } from '@/firebase';
 import { 
@@ -34,7 +35,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Search,
-  Menu
+  Menu,
+  MessageCircle
 } from 'lucide-react';
 import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -115,6 +117,13 @@ export default function AdminPage() {
           createdAt: serverTimestamp()
         });
       }
+
+      // Auto-mark month as paid if it's a monthly fee
+      if (activeTab === 'transactions' && formData.isMonthlyFee && formData.athleteId && formData.referenceMonth) {
+        await updateDoc(doc(db, 'athletes', formData.athleteId), {
+          paidMonths: arrayUnion(parseInt(formData.referenceMonth))
+        });
+      }
       setIsModalOpen(false);
       setEditingItem(null);
       setFormData({});
@@ -139,9 +148,9 @@ export default function AdminPage() {
     } else {
       // Default values
       if (activeTab === 'athletes') {
-        setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, status: 'Ativo' });
+        setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', whatsapp: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, status: 'Ativo' });
       } else if (activeTab === 'transactions') {
-        setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: format(new Date(), 'yyyy-MM-dd'), description: '' });
+        setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: format(new Date(), 'yyyy-MM-dd'), description: '', isMonthlyFee: false, athleteId: '', referenceMonth: '' });
       } else if (activeTab === 'categories') {
         setFormData({ name: '', type: 'income' });
       }
@@ -274,10 +283,8 @@ export default function AdminPage() {
                       <th className="px-6 py-4 font-medium">Foto</th>
                       <th className="px-6 py-4 font-medium">Nome</th>
                       <th className="px-6 py-4 font-medium">Apelido</th>
-                      <th className="px-6 py-4 font-medium">Número</th>
-                      <th className="px-6 py-4 font-medium">Tam.</th>
                       <th className="px-6 py-4 font-medium">Aniversário</th>
-                      <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium">WhatsApp</th>
                       <th className="px-6 py-4 font-medium">Meses Pagos</th>
                       <th className="px-6 py-4 font-medium text-right">Ações</th>
                     </tr>
@@ -320,17 +327,21 @@ export default function AdminPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">{a.nickname}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{a.number}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{a.uniformSize || '-'}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{a.birthdayDay}/{monthAbbr[a.birthdayMonth - 1]}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            (a.status === 'Ativo' || !a.status) ? 'bg-green-500 text-white' : 
-                            a.status === 'Inativo' ? 'bg-red-500 text-white' : 
-                            'bg-amber-500 text-white'
-                          }`}>
-                            {a.status || 'Ativo'}
-                          </span>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {a.whatsapp ? (
+                            <a 
+                              href={`https://wa.me/${a.whatsapp.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:text-green-700 flex items-center transition-colors font-medium"
+                            >
+                              <svg className="h-5 w-5 mr-1.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                              </svg>
+                              {a.whatsapp}
+                            </a>
+                          ) : '-'}
                         </td>
                         <td className="px-6 py-4">
                           <div className="grid grid-cols-6 gap-1 w-fit">
@@ -377,7 +388,17 @@ export default function AdminPage() {
                     {transactions.map(t => (
                       <tr key={t.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{t.description}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          <div className="flex flex-col">
+                            <span>{t.description}</span>
+                            {t.isMonthlyFee && t.athleteId && (
+                              <span className="text-[10px] text-cyan-600 font-bold uppercase">
+                                Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
+                                {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className={`px-6 py-4 text-sm font-bold text-right ${t.type === 'income' ? 'text-cyan-600' : 'text-red-600'}`}>
                           R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
@@ -524,6 +545,15 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">WhatsApp</label>
+                    <input 
+                      type="text" value={formData.whatsapp || ''} 
+                      onChange={e => setFormData({...formData, whatsapp: e.target.value})}
+                      placeholder="(00) 00000-0000"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Meses Pagos (2026)</label>
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
@@ -594,6 +624,65 @@ export default function AdminPage() {
                         <option value="Resenha">Resenha</option>
                       </select>
                     </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Mensalidade?</label>
+                      <div className="flex items-center space-x-4 py-2">
+                        <label className="flex items-center cursor-pointer group">
+                          <input 
+                            type="radio" 
+                            name="isMonthlyFee" 
+                            checked={formData.isMonthlyFee === true}
+                            onChange={() => setFormData({...formData, isMonthlyFee: true, category: 'mensalidade'})}
+                            className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700 group-hover:text-cyan-600 transition-colors">Sim</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer group">
+                          <input 
+                            type="radio" 
+                            name="isMonthlyFee" 
+                            checked={formData.isMonthlyFee === false}
+                            onChange={() => setFormData({...formData, isMonthlyFee: false, athleteId: ''})}
+                            className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700 group-hover:text-cyan-600 transition-colors">Não</span>
+                        </label>
+                      </div>
+                    </div>
+                    {formData.isMonthlyFee && (
+                      <div className="grid grid-cols-2 gap-4 col-span-2">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Atleta</label>
+                          <select 
+                            required={formData.isMonthlyFee}
+                            value={formData.athleteId || ''} 
+                            onChange={e => setFormData({...formData, athleteId: e.target.value})}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                          >
+                            <option value="">Selecionar Atleta</option>
+                            {athletes.map(a => (
+                              <option key={a.id} value={a.id}>{a.nickname || a.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Mês Referência</label>
+                          <select 
+                            required={formData.isMonthlyFee}
+                            value={formData.referenceMonth || ''} 
+                            onChange={e => setFormData({...formData, referenceMonth: e.target.value})}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                          >
+                            <option value="">Selecionar Mês</option>
+                            {monthAbbr.map((abbr, i) => (
+                              <option key={i} value={i + 1}>{abbr}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>

@@ -14,7 +14,8 @@
         "uniformSize": { "type": "string", "enum": ["P", "M", "G", "GG", "XG"], "description": "Size of the athlete's uniform." },
         "paidMonths": { "type": "array", "items": { "type": "integer" }, "description": "List of months (1-12) paid by the athlete in the current year." },
         "isBoardMember": { "type": "boolean", "description": "Whether the athlete is part of the board of directors." },
-        "status": { "type": "string", "enum": ["Ativo", "Inativo", "Afastado"], "description": "Current status of the athlete." }
+        "status": { "type": "string", "enum": ["Ativo", "Inativo", "Afastado"], "description": "Current status of the athlete." },
+        "whatsapp": { "type": "string", "description": "WhatsApp contact number." }
       },
       "required": ["name", "nickname", "number", "birthdayDay", "birthdayMonth"]
     },
@@ -28,6 +29,8 @@
         "amount": { "type": "number", "description": "Value of the transaction." },
         "date": { "type": "string", "format": "date-time", "description": "When it happened." },
         "description": { "type": "string", "description": "Optional details." },
+        "isMonthlyFee": { "type": "boolean", "description": "Whether this is a monthly fee payment." },
+        "referenceMonth": { "type": "integer", "description": "The month (1-12) this payment refers to." },
         "athleteId": { "type": "string", "description": "Associated athlete ID for monthly fees." },
         "monthYear": { "type": "string", "description": "Reference month/year (e.g., '03-2026') for fees." }
       },

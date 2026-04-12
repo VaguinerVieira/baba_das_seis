@@ -23,6 +23,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { logout } from '@/firebase';
 
+const monthAbbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
 export default function Dashboard() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -231,7 +233,17 @@ export default function Dashboard() {
                 {transactions.slice(0, 5).map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
-                    <td className="px-6 py-4 text-sm text-gray-800">{t.description || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      <div className="flex flex-col">
+                        <span>{t.description || '-'}</span>
+                        {t.isMonthlyFee && t.athleteId && (
+                          <span className="text-[10px] text-cyan-600 font-bold uppercase">
+                            Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
+                            {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className={`px-6 py-4 text-sm font-bold text-right ${
                       t.type === 'income' ? 'text-cyan-600' : 'text-red-600'
                     }`}>
@@ -294,7 +306,17 @@ export default function Dashboard() {
                     .map(t => (
                       <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
-                        <td className="px-4 sm:px-6 py-4 text-sm text-gray-800">{t.description || '-'}</td>
+                        <td className="px-4 sm:px-6 py-4 text-sm text-gray-800">
+                          <div className="flex flex-col">
+                            <span>{t.description || '-'}</span>
+                            {t.isMonthlyFee && t.athleteId && (
+                              <span className="text-[10px] text-cyan-600 font-bold uppercase">
+                                Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
+                                {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${
                           t.type === 'income' ? 'text-cyan-600' : 'text-red-600'
                         }`}>
