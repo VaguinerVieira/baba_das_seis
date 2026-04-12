@@ -140,6 +140,8 @@ export default function AthletesReportPage() {
     return months.find(m => m.id === monthId)?.days || 0;
   };
 
+  const currentMonth = new Date().getMonth() + 1;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -192,7 +194,7 @@ export default function AthletesReportPage() {
                 }}
                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm appearance-none"
               >
-                <option value="all">Nascidos no Mês</option>
+                <option value="all">Meses</option>
                 {months.map(m => (
                   <option key={m.id} value={m.id}>{m.label}</option>
                 ))}
@@ -208,7 +210,7 @@ export default function AthletesReportPage() {
                 onChange={(e) => setSelectedDay(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
                 className={`w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm appearance-none ${selectedMonth === 'all' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <option value="all">no dia</option>
+                <option value="all">Dias</option>
                 {selectedMonth !== 'all' && Array.from({ length: getDaysInMonth(selectedMonth) }, (_, i) => i + 1).map(day => (
                   <option key={day} value={day}>{day}</option>
                 ))}
@@ -219,10 +221,10 @@ export default function AthletesReportPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input 
                 type="text"
-                placeholder="Buscar por nome ou apelido..."
+                placeholder="Buscar Atleta..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-3 bg-cyan-50/50 border border-cyan-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium placeholder:text-cyan-400"
               />
             </div>
           </div>
@@ -241,49 +243,14 @@ export default function AthletesReportPage() {
               return matchesSearch && matchesMonth && matchesDay;
             })
             .map(athlete => {
-              const paidCount = months.filter(m => athlete.paidMonths?.includes(m.id)).length;
-              
               return (
                 <div key={athlete.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-4 min-w-[250px]">
-                    <div className="h-14 w-14 flex-shrink-0">
-                      {athlete.photoUrl ? (
-                        <div className="relative h-14 w-14">
-                          <Image 
-                            className="rounded-full object-cover border-2 border-cyan-100" 
-                            src={athlete.photoUrl} 
-                            alt={athlete.name}
-                            fill
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-14 w-14 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 font-bold text-xl">
-                          {athlete.name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-4 min-w-[200px]">
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-bold text-gray-900">{athlete.nickname || athlete.name}</h3>
-                        {athlete.isBoardMember && (
-                          <span className="px-1.5 py-0.5 bg-cyan-100 text-cyan-700 text-[10px] font-bold rounded uppercase tracking-wider">
-                            Diretoria
-                          </span>
-                        )}
                       </div>
                       <p className="text-sm text-gray-500">{athlete.name}</p>
-                      <div className="mt-1 flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700">
-                          Nasc: {athlete.birthdayDay}/{months[athlete.birthdayMonth - 1]?.label}
-                        </span>
-                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                          {paidCount} Pagos
-                        </span>
-                        <span className="text-xs font-bold text-red-400 bg-red-50 px-2 py-0.5 rounded-full">
-                          {12 - paidCount} Pendentes
-                        </span>
-                      </div>
                     </div>
                   </div>
 
@@ -291,13 +258,24 @@ export default function AthletesReportPage() {
                   <div className="flex-1 grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-1.5 sm:gap-2">
                     {months.map(month => {
                       const isPaid = athlete.paidMonths?.includes(month.id);
+                      const isPastOrCurrent = month.id <= currentMonth;
+                      const isUnpaidPast = !isPaid && isPastOrCurrent;
+                      
                       return (
-                        <div key={month.id} className={`flex flex-col items-center p-1.5 sm:p-2 rounded-xl border transition-all ${isPaid ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100 opacity-40'}`}>
-                          <span className={`text-[8px] sm:text-[10px] font-bold uppercase mb-0.5 sm:mb-1 ${isPaid ? 'text-green-700' : 'text-gray-400'}`}>{month.label}</span>
+                        <div key={month.id} className={`flex flex-col items-center p-1.5 sm:p-2 rounded-xl border transition-all ${
+                          isPaid ? 'bg-green-50 border-green-100' : 
+                          isUnpaidPast ? 'bg-red-50 border-red-100' :
+                          'bg-gray-50 border-gray-100 opacity-40'
+                        }`}>
+                          <span className={`text-[8px] sm:text-[10px] font-bold uppercase mb-0.5 sm:mb-1 ${
+                            isPaid ? 'text-green-700' : 
+                            isUnpaidPast ? 'text-red-700' :
+                            'text-gray-400'
+                          }`}>{month.label}</span>
                           {isPaid ? (
                             <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                           ) : (
-                            <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full border-2 border-gray-200" />
+                            <div className={`h-4 w-4 sm:h-5 sm:w-5 rounded-full border-2 ${isUnpaidPast ? 'border-red-200 bg-red-100/50' : 'border-gray-200'}`} />
                           )}
                         </div>
                       );
@@ -392,7 +370,7 @@ export default function AthletesReportPage() {
                   </div>
                   <div className="flex items-center">
                     <span className={`px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider ${
-                      selectedAthlete.status === 'Ativo' ? 'bg-green-500 text-white' : 
+                      (selectedAthlete.status === 'Ativo' || !selectedAthlete.status) ? 'bg-green-500 text-white' : 
                       selectedAthlete.status === 'Inativo' ? 'bg-red-500 text-white' : 
                       'bg-amber-500 text-white'
                     }`}>

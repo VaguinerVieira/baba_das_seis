@@ -141,7 +141,7 @@ export default function AdminPage() {
       if (activeTab === 'athletes') {
         setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, status: 'Ativo' });
       } else if (activeTab === 'transactions') {
-        setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: new Date().toISOString().split('T')[0], description: '' });
+        setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: format(new Date(), 'yyyy-MM-dd'), description: '' });
       } else if (activeTab === 'categories') {
         setFormData({ name: '', type: 'income' });
       }
@@ -325,7 +325,7 @@ export default function AdminPage() {
                         <td className="px-6 py-4 text-sm text-gray-600">{a.birthdayDay}/{monthAbbr[a.birthdayMonth - 1]}</td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            a.status === 'Ativo' ? 'bg-green-500 text-white' : 
+                            (a.status === 'Ativo' || !a.status) ? 'bg-green-500 text-white' : 
                             a.status === 'Inativo' ? 'bg-red-500 text-white' : 
                             'bg-amber-500 text-white'
                           }`}>
@@ -376,7 +376,7 @@ export default function AdminPage() {
                   <tbody className="divide-y divide-gray-100">
                     {transactions.map(t => (
                       <tr key={t.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date), 'dd/MM/yyyy')}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{t.description}</td>
                         <td className={`px-6 py-4 text-sm font-bold text-right ${t.type === 'income' ? 'text-cyan-600' : 'text-red-600'}`}>
                           R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

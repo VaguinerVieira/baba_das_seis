@@ -230,7 +230,7 @@ export default function Dashboard() {
               <tbody className="divide-y divide-gray-100">
                 {transactions.slice(0, 5).map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date), 'dd/MM/yyyy')}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
                     <td className="px-6 py-4 text-sm text-gray-800">{t.description || '-'}</td>
                     <td className={`px-6 py-4 text-sm font-bold text-right ${
                       t.type === 'income' ? 'text-cyan-600' : 'text-red-600'
@@ -293,7 +293,7 @@ export default function Dashboard() {
                     )
                     .map(t => (
                       <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">{format(new Date(t.date), 'dd/MM/yyyy')}</td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
                         <td className="px-4 sm:px-6 py-4 text-sm text-gray-800">{t.description || '-'}</td>
                         <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${
                           t.type === 'income' ? 'text-cyan-600' : 'text-red-600'
