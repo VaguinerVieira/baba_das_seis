@@ -30,8 +30,17 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [athletes, setAthletes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
   const [statementSearchTerm, setStatementSearchTerm] = useState('');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const qTransactions = query(collection(db, 'transactions'), orderBy('date', 'desc'), orderBy('createdAt', 'desc'));
@@ -92,21 +101,22 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <nav className={`bg-white border-b border-gray-200 sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'py-2' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
+          <div className={`flex flex-col sm:flex-row justify-between items-center transition-all duration-300 ${scrolled ? 'h-auto sm:h-12' : 'h-auto sm:h-16 py-4 sm:py-0'}`}>
+            <div className={`flex flex-col items-center sm:flex-row sm:items-center transition-all duration-300 ${scrolled ? 'pt-0' : 'pt-5 sm:pt-0'}`}>
               <Image 
                 src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
                 alt="Logo Baba das Seis" 
-                width={200} 
-                height={80} 
-                className="h-16 w-auto mr-4"
+                width={400} 
+                height={160} 
+                className={`w-auto transition-all duration-300 sm:mr-4 ${scrolled ? 'h-12' : 'h-32 sm:h-16'}`}
                 priority
                 referrerPolicy="no-referrer"
               />
+              <span className={`text-cyan-600 font-bold text-xl mt-2 sm:hidden transition-all duration-300 overflow-hidden ${scrolled ? 'h-0 opacity-0 mt-0' : 'h-auto opacity-100'}`}>Gestão Financeira</span>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className={`flex items-center space-x-2 sm:space-x-4 transition-all duration-300 ${scrolled ? 'mt-2 sm:mt-0' : 'mt-4 sm:mt-0'}`}>
               {user && isAdmin ? (
                 <>
                   <Link href="/admin" className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer">

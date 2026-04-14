@@ -41,18 +41,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-8 pt-[20px] sm:pt-0">
           <div className="mb-4">
             <Image 
               src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
               alt="Logo Baba das Seis" 
-              width={320} 
-              height={128} 
-              className="h-28 w-auto"
+              width={640} 
+              height={256} 
+              className="h-56 sm:h-28 w-auto"
               priority
               referrerPolicy="no-referrer"
             />
           </div>
+          <span className="text-cyan-600 font-bold text-xl mb-2">Gestão Financeira</span>
           <h1 className="text-2xl font-bold text-gray-800">Baba das Seis</h1>
           <p className="text-gray-500 text-center mt-2">Acesse o painel administrativo para gerenciar as finanças do grupo.</p>
         </div>

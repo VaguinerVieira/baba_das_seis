@@ -49,6 +49,15 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'athletes' | 'transactions' | 'categories'>('athletes');
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Data states
   const [athletes, setAthletes] = useState<any[]>([]);
@@ -163,22 +172,28 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <div className="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30">
-        <Image 
-          src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
-          alt="Logo Baba das Seis" 
-          width={160} 
-          height={64} 
-          className="h-12 w-auto"
-          priority
-          referrerPolicy="no-referrer"
-        />
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-        >
-          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+      <div className={`md:hidden bg-white border-b border-gray-200 flex flex-col items-center sticky top-0 z-30 transition-all duration-300 ${scrolled ? 'p-2 pt-2' : 'p-4 pt-[20px]'}`}>
+        <div className={`w-full flex justify-between items-center transition-all duration-300 ${scrolled ? 'mb-0' : 'mb-4'}`}>
+          <div className="w-10"></div> {/* Spacer */}
+          <div className="flex flex-col items-center">
+            <Image 
+              src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
+              alt="Logo Baba das Seis" 
+              width={320} 
+              height={128} 
+              className={`w-auto transition-all duration-300 ${scrolled ? 'h-10' : 'h-24'}`}
+              priority
+              referrerPolicy="no-referrer"
+            />
+            <span className={`text-cyan-600 font-bold text-lg transition-all duration-300 overflow-hidden ${scrolled ? 'h-0 opacity-0 mt-0' : 'h-auto opacity-100 mt-2'}`}>Gestão Financeira</span>
+          </div>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar */}

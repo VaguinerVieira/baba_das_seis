@@ -64,6 +64,62 @@ export default function AthletesReportPage() {
     return () => unsubCategories();
   }, []);
 
+  const currentMonth = new Date().getMonth() + 1;
+
+  const exportDebtorsToPDF = () => {
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    doc.setFontSize(14);
+    doc.setTextColor(220, 38, 38); // red-600
+    doc.text('Relatório de Inadimplentes - Mensalidades 2026', 14, 15);
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 21);
+    doc.text(`Referência: Janeiro até ${months[currentMonth - 1]?.label}`, 14, 26);
+
+    const head = [['Atleta', ...months.slice(0, currentMonth).map(m => m.label)]];
+    
+    const debtors = athletes.filter(athlete => {
+      for (let i = 1; i <= currentMonth; i++) {
+        if (!athlete.paidMonths?.includes(i)) return true;
+      }
+      return false;
+    });
+
+    const tableData = debtors.map(athlete => {
+      const row = [athlete.nickname || athlete.name];
+      for (let i = 1; i <= currentMonth; i++) {
+        const isPaid = athlete.paidMonths?.includes(i);
+        row.push(isPaid ? 'OK' : 'PENDENTE');
+      }
+      return row;
+    });
+
+    autoTable(doc, {
+      startY: 32,
+      head: head,
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 38, 38], halign: 'center', textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 8, halign: 'center', valign: 'middle', cellPadding: 2 },
+      columnStyles: {
+        0: { halign: 'left', fontStyle: 'bold', cellWidth: 40 }
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body' && data.column.index > 0) {
+          if (data.cell.raw === 'OK') {
+            data.cell.styles.textColor = [22, 163, 74]; // green-600
+          } else if (data.cell.raw === 'PENDENTE') {
+            data.cell.styles.textColor = [220, 38, 38]; // red-600
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      }
+    });
+
+    doc.save('relatorio-inadimplentes-baba-das-seis.pdf');
+  };
+
   const exportToPDF = () => {
     const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for better grid fit
     
@@ -174,8 +230,6 @@ export default function AthletesReportPage() {
     return months.find(m => m.id === monthId)?.days || 0;
   };
 
-  const currentMonth = new Date().getMonth() + 1;
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -196,7 +250,13 @@ export default function AthletesReportPage() {
               </Link>
               <h1 className="text-lg sm:text-xl font-bold text-gray-800">Relatório</h1>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={exportDebtorsToPDF}
+                className="flex items-center px-3 sm:px-4 py-2 bg-red-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-red-600 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 shadow-sm"
+              >
+                <FileDown className="h-4 w-4 mr-1 sm:mr-2" /> Inadimplentes
+              </button>
               <button 
                 onClick={exportToPDF}
                 className="flex items-center px-3 sm:px-4 py-2 bg-cyan-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-cyan-600 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 shadow-sm"
@@ -228,7 +288,7 @@ export default function AthletesReportPage() {
                 }}
                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm appearance-none"
               >
-                <option value="all">Meses</option>
+                <option value="all">Niver do Mês</option>
                 {months.map(m => (
                   <option key={m.id} value={m.id}>{m.label}</option>
                 ))}
@@ -244,7 +304,7 @@ export default function AthletesReportPage() {
                 onChange={(e) => setSelectedDay(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
                 className={`w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm appearance-none ${selectedMonth === 'all' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <option value="all">Dias</option>
+                <option value="all">Niver do Dia</option>
                 {selectedMonth !== 'all' && Array.from({ length: getDaysInMonth(selectedMonth) }, (_, i) => i + 1).map(day => (
                   <option key={day} value={day}>{day}</option>
                 ))}
