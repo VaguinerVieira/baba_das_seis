@@ -12,7 +12,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true, isAdmin: false });
 
-export const ADMIN_EMAIL = 'vaguiner@gmail.com';
+export const ADMIN_EMAILS = ['vaguiner@gmail.com', 'bbseis1976@gmail.com'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      setIsAdmin(user?.email === ADMIN_EMAIL);
+      setIsAdmin(user?.email ? ADMIN_EMAILS.includes(user.email) : false);
       setLoading(false);
     });
     return () => unsubscribe();
