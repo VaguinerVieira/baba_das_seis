@@ -77,7 +77,25 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
+      <div className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 p-4 z-50">
+        <div className="max-w-7xl mx-auto flex justify-end items-center space-x-6">
+          <a 
+            href="https://babadasseis.netlify.app/" 
+            className="text-sm font-medium text-gray-600 hover:text-cyan-500 transition-colors"
+          >
+            Início
+          </a>
+          <a 
+            href="https://drive.google.com/file/d/15IdR0y2pQZdLiaF60dPTaNDR1PMTWZLT/view?usp=sharing" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-gray-600 hover:text-cyan-500 transition-colors"
+          >
+            Regulamento
+          </a>
+        </div>
+      </div>
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-gray-100 mt-16">
         <div className="flex flex-col items-center mb-8 pt-[20px] sm:pt-0">
           <div className="mb-4">
             <Image 

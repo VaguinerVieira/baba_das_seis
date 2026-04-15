@@ -266,6 +266,20 @@ export default function AthletesReportPage() {
               <h1 className="text-lg sm:text-xl font-bold text-gray-800">Relatório</h1>
             </div>
             <div className="flex items-center gap-2 relative">
+              <a 
+                href="https://babadasseis.netlify.app/" 
+                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer mr-2"
+              >
+                Início
+              </a>
+              <a 
+                href="https://drive.google.com/file/d/15IdR0y2pQZdLiaF60dPTaNDR1PMTWZLT/view?usp=sharing" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer mr-4"
+              >
+                Regulamento
+              </a>
               <div className="relative">
                 <button 
                   onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}

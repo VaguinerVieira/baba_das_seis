@@ -1,7 +1,6 @@
 import type {Metadata} from 'next';
 import './globals.css'; // Global styles
 import { AuthProvider } from '@/hooks/use-auth';
-import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
   title: 'Baba das Seis - Gestão Financeira',
@@ -14,10 +13,9 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="pt-BR">
-      <body suppressHydrationWarning className="pb-16">
+      <body suppressHydrationWarning>
         <AuthProvider>
           {children}
-          <Footer />
         </AuthProvider>
       </body>
     </html>
