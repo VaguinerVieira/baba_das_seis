@@ -46,9 +46,9 @@ export default function LoginPage() {
             <Image 
               src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
               alt="Logo Baba das Seis" 
-              width={640} 
-              height={256} 
-              className="h-56 sm:h-28 w-auto"
+              width={1280} 
+              height={512} 
+              className="h-56 sm:h-56 w-auto"
               priority
               referrerPolicy="no-referrer"
             />

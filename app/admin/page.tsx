@@ -150,6 +150,19 @@ export default function AdminPage() {
     }
   };
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value || 0);
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    const amount = Number(value) / 100;
+    setFormData({ ...formData, amount });
+  };
+
   const openModal = (item: any = null) => {
     setEditingItem(item);
     if (item) {
@@ -202,9 +215,9 @@ export default function AdminPage() {
           <Image 
             src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
             alt="Logo Baba das Seis" 
-            width={240} 
-            height={96} 
-            className="h-20 w-auto"
+            width={480} 
+            height={192} 
+            className="h-40 w-auto"
             priority
             referrerPolicy="no-referrer"
           />
@@ -415,7 +428,7 @@ export default function AdminPage() {
                           </div>
                         </td>
                         <td className={`px-6 py-4 text-sm font-bold text-right ${t.type === 'income' ? 'text-cyan-600' : 'text-red-600'}`}>
-                          R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
                           <button onClick={() => openModal(t)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
@@ -592,20 +605,38 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-800">Diretoria?</label>
-                      <p className="text-xs text-gray-500">Marque se este atleta faz parte da diretoria</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-800">Diretoria?</label>
+                        <p className="text-xs text-gray-500">Membro da diretoria</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, isBoardMember: !formData.isBoardMember})}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isBoardMember ? 'bg-cyan-500' : 'bg-gray-200'}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isBoardMember ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, isBoardMember: !formData.isBoardMember})}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isBoardMember ? 'bg-cyan-500' : 'bg-gray-200'}`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isBoardMember ? 'translate-x-6' : 'translate-x-1'}`}
-                      />
-                    </button>
+
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-800">Novo?</label>
+                        <p className="text-xs text-gray-500">Atleta novato no grupo</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, isNew: !formData.isNew})}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isNew ? 'bg-cyan-500' : 'bg-gray-200'}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isNew ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -703,9 +734,12 @@ export default function AdminPage() {
                     <div>
                       <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Valor (R$)</label>
                       <input 
-                        type="number" step="0.01" required value={formData.amount || ''} 
-                        onChange={e => setFormData({...formData, amount: parseFloat(e.target.value)})}
+                        type="text" 
+                        required 
+                        value={formData.amount !== undefined ? formatCurrency(formData.amount) : ''} 
+                        onChange={handleCurrencyChange}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                        placeholder="R$ 0,00"
                       />
                     </div>
                     <div>

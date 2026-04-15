@@ -28,6 +28,7 @@ import {
   Shirt,
   FileDown,
   PlusCircle,
+  ChevronDown,
   DollarSign,
   Save,
   MessageCircle
@@ -46,6 +47,7 @@ export default function AthletesReportPage() {
   const [selectedDay, setSelectedDay] = useState<number | 'all'>('all');
   const [selectedAthlete, setSelectedAthlete] = useState<any>(null);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [transactionData, setTransactionData] = useState<any>({
     type: 'income',
@@ -230,6 +232,19 @@ export default function AthletesReportPage() {
     return months.find(m => m.id === monthId)?.days || 0;
   };
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value || 0);
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    const amount = Number(value) / 100;
+    setTransactionData({ ...transactionData, amount });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -250,19 +265,44 @@ export default function AthletesReportPage() {
               </Link>
               <h1 className="text-lg sm:text-xl font-bold text-gray-800">Relatório</h1>
             </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={exportDebtorsToPDF}
-                className="flex items-center px-3 sm:px-4 py-2 bg-red-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-red-600 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 shadow-sm"
-              >
-                <FileDown className="h-4 w-4 mr-1 sm:mr-2" /> Inadimplentes
-              </button>
-              <button 
-                onClick={exportToPDF}
-                className="flex items-center px-3 sm:px-4 py-2 bg-cyan-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-cyan-600 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 shadow-sm"
-              >
-                <FileDown className="h-4 w-4 mr-1 sm:mr-2" /> <span className="hidden xs:inline">Exportar</span> PDF
-              </button>
+            <div className="flex items-center gap-2 relative">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+                  className="flex items-center px-3 sm:px-4 py-2 bg-cyan-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-cyan-600 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 shadow-sm"
+                >
+                  <FileDown className="h-4 w-4 mr-1 sm:mr-2" /> Exportar <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${isExportMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isExportMenuOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setIsExportMenuOpen(false)}
+                    ></div>
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20 animate-in fade-in zoom-in duration-200 origin-top-right">
+                      <button
+                        onClick={() => {
+                          exportDebtorsToPDF();
+                          setIsExportMenuOpen(false);
+                        }}
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <FileDown className="h-4 w-4 mr-2" /> Inadimplentes
+                      </button>
+                      <button
+                        onClick={() => {
+                          exportToPDF();
+                          setIsExportMenuOpen(false);
+                        }}
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-cyan-50 transition-colors"
+                      >
+                        <FileDown className="h-4 w-4 mr-2" /> Situação Geral
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -566,10 +606,12 @@ export default function AthletesReportPage() {
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Valor (R$)</label>
                   <input 
-                    type="number" step="0.01" required 
-                    value={transactionData.amount || ''} 
-                    onChange={e => setTransactionData({...transactionData, amount: parseFloat(e.target.value)})}
+                    type="text" 
+                    required 
+                    value={transactionData.amount !== undefined ? formatCurrency(transactionData.amount) : ''} 
+                    onChange={handleCurrencyChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                    placeholder="R$ 0,00"
                   />
                 </div>
                 <div>
