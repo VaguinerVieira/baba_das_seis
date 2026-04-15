@@ -104,7 +104,8 @@ export default function Dashboard() {
       }
       return { ...athlete, pendingMonths };
     })
-    .filter(a => a.pendingMonths.length >= 2);
+    .filter(a => a.pendingMonths.length >= 2)
+    .sort((a, b) => a.pendingMonths.length - b.pendingMonths.length);
 
   const COLORS = ['#06b6d4', '#ef4444', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6'];
 
