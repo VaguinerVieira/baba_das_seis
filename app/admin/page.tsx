@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { 
@@ -170,7 +171,7 @@ export default function AdminPage() {
     } else {
       // Default values
       if (activeTab === 'athletes') {
-        setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', whatsapp: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, status: 'Ativo' });
+        setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', whatsapp: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, isExempt: false, status: 'Ativo' });
       } else if (activeTab === 'transactions') {
         setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: format(new Date(), 'yyyy-MM-dd'), description: '', isMonthlyFee: false, athleteId: '', referenceMonth: '' });
       } else if (activeTab === 'categories') {
@@ -285,6 +286,12 @@ export default function AdminPage() {
               >
                 Regulamento
               </a>
+              <Link 
+                href="/presenca" 
+                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
+              >
+                Presença
+              </Link>
             </div>
             {activeTab === 'athletes' && (
               <div className="relative w-full sm:w-64">
@@ -621,7 +628,7 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
                       <div>
                         <label className="block text-sm font-bold text-gray-800">Diretoria?</label>
@@ -641,7 +648,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
                       <div>
                         <label className="block text-sm font-bold text-gray-800">Novo?</label>
-                        <p className="text-xs text-gray-500">Atleta novato no grupo</p>
+                        <p className="text-xs text-gray-500">Atleta novato</p>
                       </div>
                       <button
                         type="button"
@@ -650,6 +657,22 @@ export default function AdminPage() {
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isNew ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-800">Isento?</label>
+                        <p className="text-xs text-gray-500">Isento de mensalidades</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, isExempt: !formData.isExempt})}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isExempt ? 'bg-cyan-500' : 'bg-gray-200'}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isExempt ? 'translate-x-6' : 'translate-x-1'}`}
                         />
                       </button>
                     </div>

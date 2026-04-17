@@ -170,6 +170,12 @@ export default function Dashboard() {
               >
                 Regulamento
               </a>
+              <Link 
+                href="/presenca" 
+                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
+              >
+                Presença
+              </Link>
               {user && isAdmin ? (
                 <>
                   <Link href="/admin" className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer">

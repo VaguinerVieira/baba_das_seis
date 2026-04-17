@@ -63,7 +63,17 @@ export default function AthletesReportPage() {
     const unsubCategories = onSnapshot(query(collection(db, 'categories'), orderBy('name')), (snap) => {
       setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-    return () => unsubCategories();
+
+    const qAthletes = query(collection(db, 'athletes'), orderBy('nickname', 'asc'));
+    const unsubAthletes = onSnapshot(qAthletes, (snapshot) => {
+      setAthletes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    });
+
+    return () => {
+      unsubCategories();
+      unsubAthletes();
+    };
   }, []);
 
   const currentMonth = new Date().getMonth() + 1;
@@ -89,7 +99,8 @@ export default function AthletesReportPage() {
     });
 
     const tableData = debtors.map(athlete => {
-      const row = [athlete.nickname || athlete.name];
+      const name = athlete.isBoardMember ? `${athlete.nickname || athlete.name} (Diretor)` : (athlete.nickname || athlete.name);
+      const row = [name];
       for (let i = 1; i <= currentMonth; i++) {
         const isPaid = athlete.paidMonths?.includes(i);
         row.push(isPaid ? 'OK' : 'PENDENTE');
@@ -145,7 +156,8 @@ export default function AthletesReportPage() {
         return matchesSearch && matchesMonth && matchesDay;
       })
       .map(athlete => {
-        const row = [athlete.nickname || athlete.name];
+        const name = athlete.isBoardMember ? `${athlete.nickname || athlete.name} (Diretor)` : (athlete.nickname || athlete.name);
+        const row = [name];
         months.forEach(m => {
           const isPaid = athlete.paidMonths?.includes(m.id);
           row.push(isPaid ? 'OK' : '-');
@@ -201,16 +213,6 @@ export default function AthletesReportPage() {
 
     doc.save('relatorio-atletas-baba-das-seis.pdf');
   };
-
-  useEffect(() => {
-    const qAthletes = query(collection(db, 'athletes'), orderBy('nickname', 'asc'));
-    const unsubscribe = onSnapshot(qAthletes, (snapshot) => {
-      setAthletes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const months = [
     { id: 1, label: 'Jan', days: 31 },
@@ -383,6 +385,11 @@ export default function AthletesReportPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-bold text-gray-900">{athlete.nickname || athlete.name}</h3>
+                        {athlete.isBoardMember && (
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">
+                            Diretor
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-gray-500">{athlete.name}</p>
                     </div>
@@ -427,6 +434,11 @@ export default function AthletesReportPage() {
                 </div>
               );
             })}
+        </div>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500 italic">
+            &quot;Os atletas da diretoria e os goleiros são isentos do pagamento da mensalidade.&quot;
+          </p>
         </div>
       </main>
 
@@ -543,7 +555,7 @@ export default function AthletesReportPage() {
                       setTransactionData({
                         ...transactionData,
                         athleteId: selectedAthlete.id,
-                        description: `Mensalidade - ${selectedAthlete.nickname || selectedAthlete.name}`,
+                        description: 'Mensalidade',
                         date: format(new Date(), 'yyyy-MM-dd')
                       });
                       setIsTransactionModalOpen(true);

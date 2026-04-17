@@ -34,6 +34,11 @@ service cloud.firestore {
     //   - name: string (required)
     //   - type: string (required, enum: income, expense)
     //
+    // Collection: attendance
+    // Fields:
+    //   - date: string (required, format: YYYY-MM-DD)
+    //   - presentAthletes: list (required, items: string/athleteId)
+    //
     // ===============================================================
 
     // Helper functions
@@ -43,7 +48,8 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email == "vaguiner@gmail.com" && request.auth.token.email_verified == true
+        (request.auth.token.email == "vaguiner@gmail.com" || request.auth.token.email == "bbseis1976@gmail.com") && 
+        request.auth.token.email_verified == true
       );
     }
 
@@ -57,6 +63,7 @@ service cloud.firestore {
              (!('uniformSize' in data) || (data.uniformSize in ['P', 'M', 'G', 'GG', 'XG'])) &&
              (!('paidMonths' in data) || (data.paidMonths is list && data.paidMonths.size() <= 12)) &&
              (!('isBoardMember' in data) || (data.isBoardMember is bool)) &&
+             (!('isExempt' in data) || (data.isExempt is bool)) &&
              (!('status' in data) || (data.status in ['Ativo', 'Inativo', 'Afastado'])) &&
              (!('whatsapp' in data) || (data.whatsapp is string && data.whatsapp.size() < 20));
     }
@@ -94,6 +101,13 @@ service cloud.firestore {
     match /categories/{categoryId} {
       allow read: if true;
       allow create, update: if isAdmin() && isValidCategory(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Attendance collection
+    match /attendance/{attendanceId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
       allow delete: if isAdmin();
     }
   }

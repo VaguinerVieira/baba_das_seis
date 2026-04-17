@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { loginWithGoogle, loginWithEmail, registerWithEmail, logout } from '@/firebase';
 import { useAuth, ADMIN_EMAILS } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -93,6 +94,12 @@ export default function LoginPage() {
           >
             Regulamento
           </a>
+          <Link 
+            href="/presenca" 
+            className="text-sm font-medium text-gray-600 hover:text-cyan-500 transition-colors"
+          >
+            Presença
+          </Link>
         </div>
       </div>
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-gray-100 mt-16">
