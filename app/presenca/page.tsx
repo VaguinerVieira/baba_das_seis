@@ -25,8 +25,7 @@ import {
 import { 
   format, 
   addWeeks, 
-  nextSunday,
-  startOfSunday
+  nextSunday
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -35,11 +34,7 @@ export default function AttendancePage() {
   const [athletes, setAthletes] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
-  const [baseDate, setBaseDate] = useState<Date>(() => {
-    const today = new Date();
-    // If today is Sunday, start from today, otherwise next Sunday
-    return today.getDay() === 0 ? startOfSunday(today) : nextSunday(today);
-  });
+  const [baseDate, setBaseDate] = useState<Date>(() => nextSunday(new Date()));
 
   // Calculate 4 Sundays starting from baseDate
   const sundays = Array.from({ length: 4 }, (_, i) => addWeeks(baseDate, i));
