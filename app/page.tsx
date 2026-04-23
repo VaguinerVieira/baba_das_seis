@@ -98,6 +98,9 @@ export default function Dashboard() {
     .map(athlete => {
       const pendingMonths = [];
       for (let i = 1; i <= currentMonth; i++) {
+        // Ignore Jan (1), Feb (2), Mar (3) for "New" (isNew) athletes
+        if (athlete.isNew && i <= 3) continue;
+        
         if (!athlete.paidMonths?.includes(i)) {
           pendingMonths.push(monthAbbr[i - 1]);
         }
