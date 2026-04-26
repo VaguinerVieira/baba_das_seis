@@ -19,9 +19,10 @@ import {
   FileText,
   PlusCircle,
   AlertCircle,
+  Calendar,
   PieChart as PieChartIcon
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { logout } from '@/firebase';
 import { 
@@ -111,6 +112,42 @@ export default function Dashboard() {
     .sort((a, b) => a.pendingMonths.length - b.pendingMonths.length);
 
   const COLORS = ['#06b6d4', '#ef4444', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6'];
+
+  // Weekly Birthdays (Monday to Sunday)
+  const today = new Date();
+  const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 });
+  const endOfThisWeek = endOfWeek(today, { weekStartsOn: 1 });
+
+  const weeklyBirthdays = athletes
+    .filter(athlete => {
+      if (!athlete.birthdayDay || !athlete.birthdayMonth) return false;
+      // Normalizing to current year to check if it's within this week
+      const bday = new Date(today.getFullYear(), athlete.birthdayMonth - 1, athlete.birthdayDay);
+      return bday >= startOfThisWeek && bday <= endOfThisWeek;
+    })
+    .sort((a, b) => {
+      if (a.birthdayMonth !== b.birthdayMonth) return a.birthdayMonth - b.birthdayMonth;
+      return a.birthdayDay - b.birthdayDay;
+    });
+
+  // Compliant Athletes (Paid until May, excluding board members and exempt/new athletes)
+  const compliantAthletes = athletes
+    .filter(athlete => {
+      if (athlete.isBoardMember || athlete.isNew) return false;
+      const requiredMonths = [1, 2, 3, 4, 5]; // Jan to May
+      const paid = athlete.paidMonths || [];
+      return requiredMonths.every(m => paid.includes(m));
+    })
+    .map(athlete => {
+      const paid = athlete.paidMonths || [];
+      const paidInFormat = [...paid].sort((a, b) => a - b);
+      const paidCount = paidInFormat.length;
+      const paidRange = paidCount > 0 
+        ? `${monthAbbr[paidInFormat[0] - 1]} - ${monthAbbr[paidInFormat[paidInFormat.length - 1] - 1]}`
+        : 'Nenhum';
+      return { ...athlete, paidCount, paidRange };
+    })
+    .sort((a, b) => (a.nickname || a.name).localeCompare(b.nickname || b.name));
 
   const handleDeleteTransaction = async (id: string) => {
     if (!isAdmin) return;
@@ -281,39 +318,40 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Expenses by Category Chart */}
+          {/* Compliant Athletes (Moved here) */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                <PieChartIcon className="h-5 w-5 mr-2 text-cyan-500" /> Saídas por Categoria
+                 <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" /> Atletas Adimplentes
               </h3>
+              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                {compliantAthletes.length} Regulares
+              </span>
             </div>
-            <div className="h-[300px] w-full">
-              {expensesByCategory.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={expensesByCategory}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {expensesByCategory.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: any) => value ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00'}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {compliantAthletes.length > 0 ? (
+                compliantAthletes.map((athlete: any) => (
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-green-100 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center text-green-700 text-sm font-black">
+                        {athlete.paidCount}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">
+                          {athlete.paidRange}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                       <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="h-full flex items-center justify-center text-gray-400 text-sm italic">
-                  Nenhuma saída registrada.
+                <div className="col-span-2 h-[200px] flex flex-col items-center justify-center text-gray-400 text-sm italic py-8">
+                  <DollarSign className="h-8 w-8 mb-2 opacity-20" />
+                  Nenhum atleta com pagamentos em dia até Maio.
                 </div>
               )}
             </div>
@@ -359,6 +397,79 @@ export default function Dashboard() {
               ) : (
                 <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm italic">
                   Nenhum atleta com pendências críticas.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Weekly Birthdays and Compliant Athletes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Weekly Birthdays */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-cyan-500" /> Aniversariantes da Semana
+              </h3>
+            </div>
+            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+              {weeklyBirthdays.length > 0 ? (
+                weeklyBirthdays.map((athlete: any) => (
+                  <div key={athlete.id} className="flex items-center justify-between p-4 bg-cyan-50/30 rounded-xl border border-cyan-100/50 hover:bg-cyan-50 transition-colors">
+                    <div>
+                      <p className="font-bold text-gray-800 leading-tight">{athlete.nickname || athlete.name}</p>
+                      <p className="text-[10px] text-gray-500 uppercase font-medium">{athlete.name}</p>
+                    </div>
+                    <div className="bg-white px-3 py-1.5 rounded-xl border border-cyan-100 shadow-sm flex flex-col items-center min-w-[60px]">
+                       <span className="text-[10px] font-bold text-cyan-400 uppercase leading-none mb-1">DATA</span>
+                       <span className="text-sm font-black text-cyan-600">
+                         {String(athlete.birthdayDay).padStart(2, '0')}/{String(athlete.birthdayMonth).padStart(2, '0')}
+                       </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="h-[200px] flex flex-col items-center justify-center text-gray-400 text-sm italic">
+                  <Calendar className="h-8 w-8 mb-2 opacity-20" />
+                  Nenhum aniversariante nesta semana.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Saídas por Categoria (Moved here) */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <PieChartIcon className="h-5 w-5 mr-2 text-cyan-500" /> Saídas por Categoria
+              </h3>
+            </div>
+            <div className="h-[350px] w-full">
+              {expensesByCategory.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={expensesByCategory}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {expensesByCategory.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: any) => value ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00'}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400 text-sm italic">
+                  Nenhuma saída registrada.
                 </div>
               )}
             </div>
