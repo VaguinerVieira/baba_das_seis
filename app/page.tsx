@@ -130,11 +130,11 @@ export default function Dashboard() {
       return a.birthdayDay - b.birthdayDay;
     });
 
-  // Compliant Athletes (Paid until May, excluding board members and exempt/new athletes)
+  // Compliant Athletes (Paid until current month, excluding board members, new athletes, and exempt athletes)
   const compliantAthletes = athletes
     .filter(athlete => {
-      if (athlete.isBoardMember || athlete.isNew) return false;
-      const requiredMonths = [1, 2, 3, 4, 5]; // Jan to May
+      if (athlete.isBoardMember || athlete.isNew || athlete.isExempt) return false;
+      const requiredMonths = Array.from({ length: currentMonth }, (_, i) => i + 1);
       const paid = athlete.paidMonths || [];
       return requiredMonths.every(m => paid.includes(m));
     })
@@ -351,7 +351,7 @@ export default function Dashboard() {
               ) : (
                 <div className="col-span-2 h-[200px] flex flex-col items-center justify-center text-gray-400 text-sm italic py-8">
                   <DollarSign className="h-8 w-8 mb-2 opacity-20" />
-                  Nenhum atleta com pagamentos em dia até Maio.
+                  Nenhum atleta com pagamentos em dia até {monthAbbr[currentMonth - 1]}.
                 </div>
               )}
             </div>
