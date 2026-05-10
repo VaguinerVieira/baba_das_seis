@@ -33,7 +33,8 @@
         "isMonthlyFee": { "type": "boolean", "description": "Whether this is a monthly fee payment." },
         "referenceMonth": { "type": "integer", "description": "The month (1-12) this payment refers to." },
         "athleteId": { "type": "string", "description": "Associated athlete ID for monthly fees." },
-        "monthYear": { "type": "string", "description": "Reference month/year (e.g., '03-2026') for fees." }
+        "monthYear": { "type": "string", "description": "Reference month/year (e.g., '03-2026') for fees." },
+        "externalLink": { "type": "string", "description": "External reference link (e.g., receipt URL)." }
       },
       "required": ["type", "category", "amount", "date"]
     },

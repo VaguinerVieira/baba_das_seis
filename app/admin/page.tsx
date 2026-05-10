@@ -37,7 +37,9 @@ import {
   CheckCircle2,
   Search,
   Menu,
-  MessageCircle
+  MessageCircle,
+  ExternalLink,
+  FileSearch
 } from 'lucide-react';
 import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -173,7 +175,7 @@ export default function AdminPage() {
       if (activeTab === 'athletes') {
         setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', whatsapp: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, isExempt: false, status: 'Ativo' });
       } else if (activeTab === 'transactions') {
-        setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: format(new Date(), 'yyyy-MM-dd'), description: '', isMonthlyFee: false, athleteId: '', referenceMonth: '' });
+        setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: format(new Date(), 'yyyy-MM-dd'), description: '', isMonthlyFee: false, athleteId: '', referenceMonth: '', externalLink: '' });
       } else if (activeTab === 'categories') {
         setFormData({ name: '', type: 'income' });
       }
@@ -430,6 +432,7 @@ export default function AdminPage() {
                   <thead>
                     <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                       <th className="px-6 py-4 font-medium">Data</th>
+                      <th className="px-2 py-4 font-medium text-center w-16">CP</th>
                       <th className="px-6 py-4 font-medium">Descrição</th>
                       <th className="px-6 py-4 font-medium text-right">Valor</th>
                       <th className="px-6 py-4 font-medium text-right">Ações</th>
@@ -439,6 +442,21 @@ export default function AdminPage() {
                     {transactions.map(t => (
                       <tr key={t.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
+                        <td className="px-2 py-4 text-center">
+                          {t.externalLink ? (
+                            <a 
+                              href={t.externalLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center p-1.5 bg-cyan-50 text-cyan-600 rounded-lg hover:bg-cyan-100 transition-colors border border-cyan-100"
+                              title="Ver Comprovante"
+                            >
+                              <FileSearch className="h-4 w-4" />
+                            </a>
+                          ) : (
+                            <span className="text-gray-200">-</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           <div className="flex flex-col">
                             <span>{t.description}</span>
@@ -447,6 +465,16 @@ export default function AdminPage() {
                                 Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
                                 {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
                               </span>
+                            )}
+                            {t.externalLink && (
+                              <a 
+                                href={t.externalLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-cyan-600 font-bold uppercase flex items-center hover:underline mt-1"
+                              >
+                                <ExternalLink className="h-3 w-3 mr-1" /> Ver Comprovante
+                              </a>
                             )}
                           </div>
                         </td>
@@ -798,6 +826,18 @@ export default function AdminPage() {
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all h-24"
                     />
                   </div>
+                  {formData.type === 'expense' && (
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Link Externo (Comprovante)</label>
+                      <input 
+                        type="url" 
+                        value={formData.externalLink || ''} 
+                        onChange={e => setFormData({...formData, externalLink: e.target.value})}
+                        placeholder="https://exemplo.com/comprovante"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                      />
+                    </div>
+                  )}
                 </>
               )}
 

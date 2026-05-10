@@ -17,12 +17,15 @@ import {
   CheckCircle2,
   Search,
   FileText,
+  FileSearch,
   PlusCircle,
   AlertCircle,
   Calendar,
+  Check,
+  X,
   PieChart as PieChartIcon
 } from 'lucide-react';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addWeeks, nextSunday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { logout } from '@/firebase';
 import { 
@@ -44,6 +47,12 @@ export default function Dashboard() {
   const [scrolled, setScrolled] = useState(false);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
   const [statementSearchTerm, setStatementSearchTerm] = useState('');
+  const [athleteTab, setAthleteTab] = useState<'compliant' | 'critical' | 'absences'>('compliant');
+  const [attendance, setAttendance] = useState<Record<string, string[]>>({});
+  const [baseDate] = useState<Date>(() => nextSunday(new Date()));
+
+  // Last 4 Sundays
+  const lastFourSundays = Array.from({ length: 4 }, (_, i) => addWeeks(baseDate, i - 3));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -65,9 +74,18 @@ export default function Dashboard() {
       setLoading(false);
     });
 
+    const unsubscribeAttendance = onSnapshot(collection(db, 'attendance'), (snapshot) => {
+      const data: Record<string, string[]> = {};
+      snapshot.docs.forEach(doc => {
+        data[doc.id] = doc.data().presentAthletes || [];
+      });
+      setAttendance(data);
+    });
+
     return () => {
       unsubscribeTransactions();
       unsubscribeAthletes();
+      unsubscribeAttendance();
     };
   }, []);
 
@@ -318,101 +336,148 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Compliant Athletes (Moved here) */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                 <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" /> Atletas Adimplentes
-              </h3>
-              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                {compliantAthletes.length} Regulares
-              </span>
+          {/* Athlete Tabs (Adimplentes / Críticos) */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[480px]">
+            <div className="flex border-b border-gray-100 p-1">
+              <button 
+                onClick={() => setAthleteTab('compliant')}
+                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${athleteTab === 'compliant' ? 'bg-cyan-50 text-cyan-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <CheckCircle2 className={`h-4 w-4 ${athleteTab === 'compliant' ? 'text-cyan-500' : 'text-gray-300'}`} />
+                Adimplentes ({compliantAthletes.length})
+              </button>
+              <button 
+                onClick={() => setAthleteTab('critical')}
+                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${athleteTab === 'critical' ? 'bg-red-50 text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <AlertCircle className={`h-4 w-4 ${athleteTab === 'critical' ? 'text-red-500' : 'text-gray-300'}`} />
+                Críticos ({criticalAthletes.length})
+              </button>
+              <button 
+                onClick={() => setAthleteTab('absences')}
+                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${athleteTab === 'absences' ? 'bg-amber-50 text-amber-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <Users className={`h-4 w-4 ${athleteTab === 'absences' ? 'text-amber-500' : 'text-gray-300'}`} />
+                Ausências
+              </button>
             </div>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-              {compliantAthletes.length > 0 ? (
-                compliantAthletes.map((athlete: any) => (
-                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-green-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center text-green-700 text-sm font-black">
-                        {athlete.paidCount}
+            
+            <div className="p-6 flex-1 overflow-hidden flex flex-col">
+              {athleteTab === 'compliant' ? (
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                  {compliantAthletes.length > 0 ? (
+                    compliantAthletes.map((athlete: any) => (
+                      <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-cyan-100 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-700 text-sm font-black">
+                            {athlete.paidCount}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase">
+                              {athlete.paidRange}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                           <CheckCircle2 className="h-5 w-5 text-cyan-500" />
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">
-                          {athlete.paidRange}
-                        </span>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic py-8">
+                      <DollarSign className="h-8 w-8 mb-2 opacity-20" />
+                      Nenhum atleta regular até {monthAbbr[currentMonth - 1]}.
                     </div>
-                    <div className="text-right">
-                       <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-2 h-[200px] flex flex-col items-center justify-center text-gray-400 text-sm italic py-8">
-                  <DollarSign className="h-8 w-8 mb-2 opacity-20" />
-                  Nenhum atleta com pagamentos em dia até {monthAbbr[currentMonth - 1]}.
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Critical Athletes List */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                <AlertCircle className="h-5 w-5 mr-2 text-red-500" /> Atletas Críticos
-              </h3>
-              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                {criticalAthletes.length} Pendentes
-              </span>
-            </div>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-              {criticalAthletes.length > 0 ? (
-                criticalAthletes.map((athlete: any) => (
-                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-red-100 transition-colors">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
-                        {athlete.isNew && (
-                          <span className="text-[9px] font-black text-white bg-cyan-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
-                            Novo
-                          </span>
-                        )}
+              ) : athleteTab === 'critical' ? (
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                  {criticalAthletes.length > 0 ? (
+                    criticalAthletes.map((athlete: any) => (
+                      <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-red-100 transition-colors">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
+                            {athlete.isNew && (
+                              <span className="text-[9px] font-black text-white bg-cyan-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
+                                Novo
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {athlete.pendingMonths.map((month: string) => (
+                              <span key={month} className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded uppercase">
+                                {month}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
+                          <span className="text-sm font-bold text-red-600">{athlete.pendingMonths.length} meses</span>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {athlete.pendingMonths.map((month: string) => (
-                          <span key={month} className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded uppercase">
-                            {month}
-                          </span>
+                    ))
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
+                      Nenhum atleta com pendências críticas.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <th className="pb-3">Atleta</th>
+                        {lastFourSundays.map(s => (
+                          <th key={s.toISOString()} className="pb-3 text-center">{format(s, 'dd/MM')}</th>
                         ))}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
-                      <span className="text-sm font-bold text-red-600">{athlete.pendingMonths.length} meses</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm italic">
-                  Nenhum atleta com pendências críticas.
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {athletes.map(athlete => (
+                        <tr key={athlete.id} className="hover:bg-gray-50">
+                          <td className="py-2 pr-2">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-gray-800 truncate max-w-[100px]">{athlete.nickname || athlete.name}</span>
+                            </div>
+                          </td>
+                          {lastFourSundays.map(sunday => {
+                            const dateId = format(sunday, 'yyyy-MM-dd');
+                            const isPresent = (attendance[dateId] || []).includes(athlete.id);
+                            return (
+                              <td key={dateId} className="py-2 text-center">
+                                {isPresent ? (
+                                  <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                                    <Check className="h-3 w-3 stroke-[4px]" />
+                                  </div>
+                                ) : (
+                                  <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-50 text-red-300">
+                                    <X className="h-3 w-3 stroke-[4px]" />
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Weekly Birthdays and Compliant Athletes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Weekly Birthdays */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-[480px] flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
                 <Calendar className="h-5 w-5 mr-2 text-cyan-500" /> Aniversariantes da Semana
               </h3>
             </div>
-            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {weeklyBirthdays.length > 0 ? (
                 weeklyBirthdays.map((athlete: any) => (
                   <div key={athlete.id} className="flex items-center justify-between p-4 bg-cyan-50/30 rounded-xl border border-cyan-100/50 hover:bg-cyan-50 transition-colors">
@@ -429,15 +494,18 @@ export default function Dashboard() {
                   </div>
                 ))
               ) : (
-                <div className="h-[200px] flex flex-col items-center justify-center text-gray-400 text-sm italic">
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic">
                   <Calendar className="h-8 w-8 mb-2 opacity-20" />
                   Nenhum aniversariante nesta semana.
                 </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Saídas por Categoria (Moved here) */}
+        {/* Saídas por Categoria and Other Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Saídas por Categoria */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
@@ -560,6 +628,7 @@ export default function Dashboard() {
                 <thead className="bg-gray-50">
                   <tr className="border-b border-gray-200">
                     <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Data</th>
+                    <th className="px-2 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-16">CP</th>
                     <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Descrição</th>
                     <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Valor</th>
                   </tr>
@@ -573,6 +642,21 @@ export default function Dashboard() {
                     .map(t => (
                       <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
+                        <td className="px-2 py-4 text-center">
+                          {t.externalLink ? (
+                            <a 
+                              href={t.externalLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center p-1.5 bg-cyan-50 text-cyan-600 rounded-lg hover:bg-cyan-100 transition-colors border border-cyan-100"
+                              title="Ver Comprovante"
+                            >
+                              <FileSearch className="h-4 w-4" />
+                            </a>
+                          ) : (
+                            <span className="text-gray-200">-</span>
+                          )}
+                        </td>
                         <td className="px-4 sm:px-6 py-4 text-sm text-gray-800">
                           <div className="flex flex-col">
                             <span>{t.description || '-'}</span>

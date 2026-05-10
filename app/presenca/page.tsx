@@ -36,8 +36,8 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [baseDate, setBaseDate] = useState<Date>(() => nextSunday(new Date()));
 
-  // Calculate 4 Sundays starting from baseDate
-  const sundays = Array.from({ length: 4 }, (_, i) => addWeeks(baseDate, i));
+  // Calculate 4 Sundays ending at baseDate (showing history + upcoming)
+  const sundays = Array.from({ length: 4 }, (_, i) => addWeeks(baseDate, i - 3));
 
   useEffect(() => {
     const qAthletes = query(collection(db, 'athletes'), orderBy('nickname', 'asc'));
