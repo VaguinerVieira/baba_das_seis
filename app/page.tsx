@@ -115,6 +115,7 @@ export default function Dashboard() {
     }, []);
 
   const criticalAthletes = athletes
+    .filter(athlete => !athlete.isExempt && !athlete.isBoardMember)
     .map(athlete => {
       const pendingMonths = [];
       for (let i = 1; i <= currentMonth; i++) {
@@ -127,8 +128,8 @@ export default function Dashboard() {
       }
       return { ...athlete, pendingMonths };
     })
-    .filter(a => a.pendingMonths.length >= 2)
-    .sort((a, b) => a.pendingMonths.length - b.pendingMonths.length);
+    .filter(a => a.pendingMonths.length >= 1)
+    .sort((a, b) => b.pendingMonths.length - a.pendingMonths.length);
 
   const COLORS = ['#06b6d4', '#ef4444', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6'];
 
@@ -291,47 +292,47 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <div className="bg-blue-50 p-6 rounded-2xl shadow-sm border border-blue-100">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-cyan-50 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-cyan-500" />
+              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
               </div>
-              <span className="text-xs font-medium text-cyan-500 bg-cyan-50 px-2 py-1 rounded-full">+12%</span>
+              <span className="text-xs font-medium text-blue-600 bg-white/80 px-2 py-1 rounded-full">+12%</span>
             </div>
-            <p className="text-sm font-medium text-gray-500">Total de Entradas</p>
+            <p className="text-sm font-medium text-blue-600/70">Total de Entradas</p>
             <h3 className="text-2xl font-bold text-gray-800">{totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <div className="bg-red-50/50 p-6 rounded-2xl shadow-sm border border-red-100">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-red-50 rounded-lg">
+              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
                 <TrendingDown className="h-6 w-6 text-red-600" />
               </div>
-              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">-5%</span>
+              <span className="text-xs font-medium text-red-600 bg-white/80 px-2 py-1 rounded-full">-5%</span>
             </div>
-            <p className="text-sm font-medium text-gray-500">Total de Saídas</p>
+            <p className="text-sm font-medium text-red-600/70">Total de Saídas</p>
             <h3 className="text-2xl font-bold text-gray-800">{totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <div className="bg-emerald-50 p-6 rounded-2xl shadow-sm border border-emerald-100">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-cyan-50 rounded-lg">
-                <DollarSign className="h-6 w-6 text-cyan-600" />
+              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
+                <DollarSign className="h-6 w-6 text-emerald-600" />
               </div>
             </div>
-            <p className="text-sm font-medium text-gray-500">Saldo Atual</p>
-            <h3 className={`text-2xl font-bold ${balance >= 0 ? 'text-cyan-600' : 'text-red-600'}`}>
+            <p className="text-sm font-medium text-emerald-600/70">Saldo Atual</p>
+            <h3 className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </h3>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <div className="bg-amber-50 p-6 rounded-2xl shadow-sm border border-amber-100">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-black rounded-lg">
-                <Users className="h-6 w-6 text-white" />
+              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
+                <Users className="h-6 w-6 text-amber-600" />
               </div>
             </div>
-            <p className="text-sm font-medium text-gray-500">Atletas Ativos</p>
+            <p className="text-sm font-medium text-amber-600/70">Atletas Ativos</p>
             <h3 className="text-2xl font-bold text-gray-800">{athletes.length}</h3>
           </div>
         </div>
@@ -347,6 +348,9 @@ export default function Dashboard() {
                 {compliantAthletes.length} Regulares
               </span>
             </div>
+            <p className="text-[11px] text-gray-400 mb-6 -mt-4 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+              Atletas regulares, com pagamentos em dia até o mês atual.
+            </p>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {compliantAthletes.length > 0 ? (
                 compliantAthletes.map((athlete: any) => (
@@ -386,6 +390,9 @@ export default function Dashboard() {
                 {criticalAthletes.length} Pendentes
               </span>
             </div>
+            <p className="text-[11px] text-gray-400 mb-6 -mt-4 bg-red-50/30 p-2 rounded-lg border border-red-50">
+              Atletas irregulares com qualquer pendência, inclusive o mês atual.
+            </p>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {criticalAthletes.length > 0 ? (
                 criticalAthletes.map((athlete: any) => (
@@ -433,6 +440,9 @@ export default function Dashboard() {
                 Últimos 4 Domingos
               </span>
             </div>
+            <p className="text-[11px] text-gray-400 mb-6 -mt-4 bg-amber-50/30 p-2 rounded-lg border border-amber-100/50">
+              Confira a frequência dos atletas nos últimos 4 babas.
+            </p>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
               <table className="w-full text-left">
                 <thead>
@@ -486,12 +496,31 @@ export default function Dashboard() {
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {weeklyBirthdays.length > 0 ? (
                 weeklyBirthdays.map((athlete: any) => (
-                  <div key={athlete.id} className="flex items-center justify-between p-4 bg-cyan-50/30 rounded-xl border border-cyan-100/50 hover:bg-cyan-50 transition-colors">
-                    <div>
-                      <p className="font-bold text-gray-800 leading-tight">{athlete.nickname || athlete.name}</p>
-                      <p className="text-[10px] text-gray-500 uppercase font-medium">{athlete.name}</p>
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-cyan-50/30 rounded-xl border border-cyan-100/50 hover:bg-cyan-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-white shadow-sm bg-cyan-100 flex-shrink-0">
+                        {athlete.photoUrl ? (
+                          <div className="relative h-full w-full">
+                            <Image 
+                              src={athlete.photoUrl} 
+                              alt={athlete.nickname || athlete.name}
+                              fill
+                              className="object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-cyan-600 font-bold text-lg">
+                            {athlete.nickname?.charAt(0) || athlete.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-800 leading-tight">{athlete.nickname || athlete.name}</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-medium line-clamp-1">{athlete.name}</p>
+                      </div>
                     </div>
-                    <div className="bg-white px-3 py-1.5 rounded-xl border border-cyan-100 shadow-sm flex flex-col items-center min-w-[60px]">
+                    <div className="bg-white px-2 py-1 rounded-lg border border-cyan-100 shadow-sm flex flex-col items-center min-w-[50px] flex-shrink-0 ml-2">
                        <span className="text-[10px] font-bold text-cyan-400 uppercase leading-none mb-1">DATA</span>
                        <span className="text-sm font-black text-cyan-600">
                          {String(athlete.birthdayDay).padStart(2, '0')}/{String(athlete.birthdayMonth).padStart(2, '0')}
