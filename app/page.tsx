@@ -10,6 +10,8 @@ import {
   TrendingUp, 
   TrendingDown, 
   Users, 
+  User,
+  Cake,
   DollarSign, 
   ArrowRight,
   LogOut,
@@ -25,7 +27,7 @@ import {
   X,
   PieChart as PieChartIcon
 } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, addWeeks, nextSunday } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addWeeks, previousSunday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { logout } from '@/firebase';
 import { 
@@ -47,9 +49,8 @@ export default function Dashboard() {
   const [scrolled, setScrolled] = useState(false);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
   const [statementSearchTerm, setStatementSearchTerm] = useState('');
-  const [athleteTab, setAthleteTab] = useState<'compliant' | 'critical' | 'absences'>('compliant');
   const [attendance, setAttendance] = useState<Record<string, string[]>>({});
-  const [baseDate] = useState<Date>(() => nextSunday(new Date()));
+  const [baseDate] = useState<Date>(() => previousSunday(new Date()));
 
   // Last 4 Sundays
   const lastFourSundays = Array.from({ length: 4 }, (_, i) => addWeeks(baseDate, i - 3));
@@ -336,145 +337,150 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Athlete Tabs (Adimplentes / Críticos) */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[480px]">
-            <div className="flex border-b border-gray-100 p-1">
-              <button 
-                onClick={() => setAthleteTab('compliant')}
-                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${athleteTab === 'compliant' ? 'bg-cyan-50 text-cyan-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <CheckCircle2 className={`h-4 w-4 ${athleteTab === 'compliant' ? 'text-cyan-500' : 'text-gray-300'}`} />
-                Adimplentes ({compliantAthletes.length})
-              </button>
-              <button 
-                onClick={() => setAthleteTab('critical')}
-                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${athleteTab === 'critical' ? 'bg-red-50 text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <AlertCircle className={`h-4 w-4 ${athleteTab === 'critical' ? 'text-red-500' : 'text-gray-300'}`} />
-                Críticos ({criticalAthletes.length})
-              </button>
-              <button 
-                onClick={() => setAthleteTab('absences')}
-                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${athleteTab === 'absences' ? 'bg-amber-50 text-amber-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <Users className={`h-4 w-4 ${athleteTab === 'absences' ? 'text-amber-500' : 'text-gray-300'}`} />
-                Ausências
-              </button>
+          {/* Adimplentes */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[480px]">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                 <User className="h-5 w-5 mr-2 text-green-500" /> Adimplentes
+              </h3>
+              <span className="text-xs font-medium text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full">
+                {compliantAthletes.length} Regulares
+              </span>
             </div>
-            
-            <div className="p-6 flex-1 overflow-hidden flex flex-col">
-              {athleteTab === 'compliant' ? (
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                  {compliantAthletes.length > 0 ? (
-                    compliantAthletes.map((athlete: any) => (
-                      <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-cyan-100 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-700 text-sm font-black">
-                            {athlete.paidCount}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase">
-                              {athlete.paidRange}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                           <CheckCircle2 className="h-5 w-5 text-cyan-500" />
-                        </div>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+              {compliantAthletes.length > 0 ? (
+                compliantAthletes.map((athlete: any) => (
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-cyan-100 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-700 text-sm font-black">
+                        {athlete.paidCount}
                       </div>
-                    ))
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic py-8">
-                      <DollarSign className="h-8 w-8 mb-2 opacity-20" />
-                      Nenhum atleta regular até {monthAbbr[currentMonth - 1]}.
-                    </div>
-                  )}
-                </div>
-              ) : athleteTab === 'critical' ? (
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                  {criticalAthletes.length > 0 ? (
-                    criticalAthletes.map((athlete: any) => (
-                      <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-red-100 transition-colors">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
-                            {athlete.isNew && (
-                              <span className="text-[9px] font-black text-white bg-cyan-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
-                                Novo
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {athlete.pendingMonths.map((month: string) => (
-                              <span key={month} className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded uppercase">
-                                {month}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
-                          <span className="text-sm font-bold text-red-600">{athlete.pendingMonths.length} meses</span>
-                        </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">
+                          {athlete.paidRange}
+                        </span>
                       </div>
-                    ))
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
-                      Nenhum atleta com pendências críticas.
                     </div>
-                  )}
-                </div>
+                    <div className="text-right">
+                       <CheckCircle2 className="h-5 w-5 text-cyan-500" />
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        <th className="pb-3">Atleta</th>
-                        {lastFourSundays.map(s => (
-                          <th key={s.toISOString()} className="pb-3 text-center">{format(s, 'dd/MM')}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {athletes.map(athlete => (
-                        <tr key={athlete.id} className="hover:bg-gray-50">
-                          <td className="py-2 pr-2">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-bold text-gray-800 truncate max-w-[100px]">{athlete.nickname || athlete.name}</span>
-                            </div>
-                          </td>
-                          {lastFourSundays.map(sunday => {
-                            const dateId = format(sunday, 'yyyy-MM-dd');
-                            const isPresent = (attendance[dateId] || []).includes(athlete.id);
-                            return (
-                              <td key={dateId} className="py-2 text-center">
-                                {isPresent ? (
-                                  <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
-                                    <Check className="h-3 w-3 stroke-[4px]" />
-                                  </div>
-                                ) : (
-                                  <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-50 text-red-300">
-                                    <X className="h-3 w-3 stroke-[4px]" />
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic py-8">
+                  <DollarSign className="h-8 w-8 mb-2 opacity-20" />
+                  Nenhum atleta regular até {monthAbbr[currentMonth - 1]}.
                 </div>
               )}
             </div>
           </div>
 
-          {/* Weekly Birthdays */}
+          {/* Inadimplentes */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[480px]">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <User className="h-5 w-5 mr-2 text-red-500" /> Inadimplentes
+              </h3>
+              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                {criticalAthletes.length} Pendentes
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+              {criticalAthletes.length > 0 ? (
+                criticalAthletes.map((athlete: any) => (
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-red-100 transition-colors">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
+                        {athlete.isNew && (
+                          <span className="text-[9px] font-black text-white bg-cyan-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
+                            Novo
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {athlete.pendingMonths.map((month: string) => (
+                          <span key={month} className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded uppercase">
+                            {month}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
+                      <span className="text-sm font-bold text-red-600">{athlete.pendingMonths.length} meses</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
+                  Nenhum atleta com pendências críticas.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Presença (Relatório de Presença) */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[480px]">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <Users className="h-5 w-5 mr-2 text-amber-500" /> Presença
+              </h3>
+              <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-center">
+                Últimos 4 Domingos
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="pb-3 px-2">Atleta</th>
+                    {lastFourSundays.map(s => (
+                      <th key={s.toISOString()} className="pb-3 text-center px-1 font-black">{format(s, 'dd/MM')}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {athletes.map(athlete => (
+                    <tr key={athlete.id} className="hover:bg-gray-50 group">
+                      <td className="py-2.5 px-2">
+                        <span className="text-sm font-bold text-gray-800 line-clamp-1 group-hover:text-cyan-600 transition-colors">
+                          {athlete.nickname || athlete.name}
+                        </span>
+                      </td>
+                      {lastFourSundays.map(sunday => {
+                        const dateId = format(sunday, 'yyyy-MM-dd');
+                        const isPresent = (attendance[dateId] || []).includes(athlete.id);
+                        return (
+                          <td key={dateId} className="py-2.5 text-center px-1">
+                            {isPresent ? (
+                              <div className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-green-100 text-green-600 border border-green-200">
+                                <Check className="h-3 w-3 stroke-[4px]" />
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-red-50 text-red-300 border border-red-100 opacity-60">
+                                <X className="h-3 w-3 stroke-[4px]" />
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+
+          {/* Niver da Semana */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-[480px] flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-cyan-500" /> Aniversariantes da Semana
+                <Cake className="h-5 w-5 mr-2 text-cyan-500" /> Niver da Semana
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
@@ -497,47 +503,6 @@ export default function Dashboard() {
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic">
                   <Calendar className="h-8 w-8 mb-2 opacity-20" />
                   Nenhum aniversariante nesta semana.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Saídas por Categoria and Other Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Saídas por Categoria */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                <PieChartIcon className="h-5 w-5 mr-2 text-cyan-500" /> Saídas por Categoria
-              </h3>
-            </div>
-            <div className="h-[350px] w-full">
-              {expensesByCategory.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={expensesByCategory}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {expensesByCategory.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: any) => value ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00'}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400 text-sm italic">
-                  Nenhuma saída registrada.
                 </div>
               )}
             </div>

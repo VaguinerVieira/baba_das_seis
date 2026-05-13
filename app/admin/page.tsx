@@ -273,28 +273,6 @@ export default function AdminPage() {
             {activeTab === 'categories' && 'Gerenciar Categorias'}
           </h2>
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-stretch sm:items-center w-full sm:w-auto">
-            <div className="flex items-center space-x-4 mr-2">
-              <a 
-                href="https://babadasseis.netlify.app/" 
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
-              >
-                Início
-              </a>
-              <a 
-                href="https://drive.google.com/file/d/15IdR0y2pQZdLiaF60dPTaNDR1PMTWZLT/view?usp=sharing" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
-              >
-                Regulamento
-              </a>
-              <Link 
-                href="/presenca" 
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
-              >
-                Presença
-              </Link>
-            </div>
             {activeTab === 'athletes' && (
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
