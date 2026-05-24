@@ -92,6 +92,7 @@ export default function AthletesReportPage() {
     const head = [['Atleta', ...months.slice(0, currentMonth).map(m => m.label)]];
     
     const debtors = athletes.filter(athlete => {
+      if (athlete.status === 'Afastado' || athlete.status === 'Inativo') return false;
       for (let i = 1; i <= currentMonth; i++) {
         // Ignore Jan-Mar for new athletes
         if (athlete.isNew && i <= 3) continue;
@@ -156,6 +157,7 @@ export default function AthletesReportPage() {
     
     const tableData = athletes
       .filter(a => {
+        if (a.status === 'Afastado' || a.status === 'Inativo') return false;
         const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                              a.nickname?.toLowerCase().includes(searchTerm.toLowerCase());
         
@@ -379,6 +381,7 @@ export default function AthletesReportPage() {
         <div className="grid grid-cols-1 gap-4">
           {athletes
             .filter(a => {
+              if (a.status === 'Afastado' || a.status === 'Inativo') return false;
               const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                                    a.nickname?.toLowerCase().includes(searchTerm.toLowerCase());
               

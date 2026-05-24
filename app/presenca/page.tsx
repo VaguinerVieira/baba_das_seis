@@ -84,6 +84,8 @@ export default function AttendancePage() {
     }
   };
 
+  const activeAthletes = athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo');
+
   if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -155,14 +157,16 @@ export default function AttendancePage() {
                 </tr>
               </thead>
               <tbody>
-                {athletes.length === 0 ? (
+                {activeAthletes.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-12 text-center text-gray-400 italic">
                       Nenhum atleta cadastrado.
                     </td>
                   </tr>
                 ) : (
-                  athletes.map((athlete, idx) => (
+                  [...activeAthletes]
+                    .sort((a, b) => (a.nickname || a.name).localeCompare(b.nickname || b.name))
+                    .map((athlete, idx) => (
                     <tr key={athlete.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'} hover:bg-cyan-50/30 transition-colors group`}>
                       <td className="p-4 border-b border-gray-100 sticky left-0 bg-inherit z-10 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                         <div className="flex items-center">

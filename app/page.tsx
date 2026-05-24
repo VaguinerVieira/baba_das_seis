@@ -100,7 +100,9 @@ export default function Dashboard() {
 
   const balance = totalIncome - totalExpense;
 
-  const currentMonth = new Date().getMonth() + 1;
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const paymentDueLimit = today.getDate() <= 9 ? currentMonth - 1 : currentMonth;
 
   const expensesByCategory = transactions
     .filter(t => t.type === 'expense')
@@ -115,10 +117,11 @@ export default function Dashboard() {
     }, []);
 
   const criticalAthletes = athletes
+    .filter(athlete => athlete.status !== 'Afastado' && athlete.status !== 'Inativo')
     .filter(athlete => !athlete.isExempt && !athlete.isBoardMember)
     .map(athlete => {
       const pendingMonths = [];
-      for (let i = 1; i <= currentMonth; i++) {
+      for (let i = 1; i <= paymentDueLimit; i++) {
         // Ignore Jan (1), Feb (2), Mar (3) for "New" (isNew) athletes
         if (athlete.isNew && i <= 3) continue;
         
@@ -134,12 +137,12 @@ export default function Dashboard() {
   const COLORS = ['#06b6d4', '#ef4444', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6'];
 
   // Weekly Birthdays (Monday to Sunday)
-  const today = new Date();
   const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 });
   const endOfThisWeek = endOfWeek(today, { weekStartsOn: 1 });
 
   const weeklyBirthdays = athletes
     .filter(athlete => {
+      if (athlete.status === 'Afastado' || athlete.status === 'Inativo') return false;
       if (!athlete.birthdayDay || !athlete.birthdayMonth) return false;
       // Normalizing to current year to check if it's within this week
       const bday = new Date(today.getFullYear(), athlete.birthdayMonth - 1, athlete.birthdayDay);
@@ -150,11 +153,12 @@ export default function Dashboard() {
       return a.birthdayDay - b.birthdayDay;
     });
 
-  // Compliant Athletes (Paid until current month, excluding board members, new athletes, and exempt athletes)
+  // Compliant Athletes (Paid until current month depending on the day of the month, excluding board members, new athletes, and exempt athletes)
   const compliantAthletes = athletes
     .filter(athlete => {
+      if (athlete.status === 'Afastado' || athlete.status === 'Inativo') return false;
       if (athlete.isBoardMember || athlete.isNew || athlete.isExempt) return false;
-      const requiredMonths = Array.from({ length: currentMonth }, (_, i) => i + 1);
+      const requiredMonths = Array.from({ length: paymentDueLimit }, (_, i) => i + 1);
       const paid = athlete.paidMonths || [];
       return requiredMonths.every(m => paid.includes(m));
     })
@@ -333,7 +337,7 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-sm font-medium text-amber-600/70">Atletas Ativos</p>
-            <h3 className="text-2xl font-bold text-gray-800">{athletes.length}</h3>
+            <h3 className="text-2xl font-bold text-gray-800">{athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo').length}</h3>
           </div>
         </div>
 
@@ -344,37 +348,37 @@ export default function Dashboard() {
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
                  <User className="h-5 w-5 mr-2 text-green-500" /> Adimplentes
               </h3>
-              <span className="text-xs font-medium text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full">
+              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
                 {compliantAthletes.length} Regulares
               </span>
             </div>
-            <p className="text-[11px] text-gray-400 mb-6 -mt-4 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
-              Atletas regulares, com pagamentos em dia até o mês atual.
+            <p className="text-[11px] text-green-700/80 mb-6 -mt-4 bg-green-50/30 p-2 rounded-lg border border-green-50">
+              Atletas regulares, com pagamentos em dia até o {paymentDueLimit === currentMonth ? 'mês atual' : 'mês anterior (limite dia 09)'}.
             </p>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {compliantAthletes.length > 0 ? (
                 compliantAthletes.map((athlete: any) => (
-                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-cyan-100 transition-colors">
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-green-50/5 rounded-xl border border-green-200 hover:border-green-300 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-700 text-sm font-black">
+                      <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center text-green-700 text-sm font-black">
                         {athlete.paidCount}
                       </div>
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">
+                        <span className="text-[10px] font-bold text-green-600/70 uppercase">
                           {athlete.paidRange}
                         </span>
                       </div>
                     </div>
                     <div className="text-right">
-                       <CheckCircle2 className="h-5 w-5 text-cyan-500" />
+                       <CheckCircle2 className="h-5 w-5 text-green-500" />
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic py-8">
                   <DollarSign className="h-8 w-8 mb-2 opacity-20" />
-                  Nenhum atleta regular até {monthAbbr[currentMonth - 1]}.
+                  Nenhum atleta regular até {monthAbbr[paymentDueLimit - 1] || 'mês anterior'}.
                 </div>
               )}
             </div>
@@ -391,12 +395,12 @@ export default function Dashboard() {
               </span>
             </div>
             <p className="text-[11px] text-gray-400 mb-6 -mt-4 bg-red-50/30 p-2 rounded-lg border border-red-50">
-              Atletas irregulares com qualquer pendência, inclusive o mês atual.
+              Atletas irregulares com qualquer pendência até o {paymentDueLimit === currentMonth ? 'mês atual' : 'mês anterior  (limite dia 09)'}.
             </p>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {criticalAthletes.length > 0 ? (
                 criticalAthletes.map((athlete: any) => (
-                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-red-100 transition-colors">
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-red-50/5 rounded-xl border border-red-200 hover:border-red-300 transition-colors">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
@@ -454,7 +458,10 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {athletes.map(athlete => (
+                  {[...athletes]
+                    .filter(a => a.status !== 'Afastado' && a.status !== 'Inativo')
+                    .sort((a, b) => (a.nickname || a.name).localeCompare(b.nickname || b.name))
+                    .map(athlete => (
                     <tr key={athlete.id} className="hover:bg-gray-50 group">
                       <td className="py-2.5 px-2">
                         <span className="text-sm font-bold text-gray-800 line-clamp-1 group-hover:text-cyan-600 transition-colors">

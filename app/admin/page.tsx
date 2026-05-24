@@ -711,7 +711,7 @@ export default function AdminPage() {
                           <option key={c.id} value={c.name}>{c.name}</option>
                         ))}
                         <option value="mensalidade">Mensalidade</option>
-                        <option value="Material Esportivos">Material Esportivos</option>
+                        <option value="Material Esportivo">Material Esportivo</option>
                         <option value="Resenha">Resenha</option>
                       </select>
                     </div>
