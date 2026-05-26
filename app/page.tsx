@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { collection, query, onSnapshot, orderBy, limit, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
@@ -71,7 +71,18 @@ export default function Dashboard() {
 
     const qAthletes = query(collection(db, 'athletes'), orderBy('name', 'asc'));
     const unsubscribeAthletes = onSnapshot(qAthletes, (snapshot) => {
-      setAthletes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const data = snapshot.docs.map(doc => {
+        const rawData: any = { id: doc.id, ...doc.data() };
+        if (rawData.photoUrl && rawData.photoUrl.includes('drive.google.com/file/d/')) {
+          const parts = rawData.photoUrl.split('/d/');
+          if (parts.length > 1) {
+            const fileId = parts[1].split('/')[0];
+            rawData.photoUrl = `https://drive.google.com/uc?id=${fileId}`;
+          }
+        }
+        return rawData;
+      });
+      setAthletes(data);
       setLoading(false);
     });
 
@@ -89,6 +100,24 @@ export default function Dashboard() {
       unsubscribeAttendance();
     };
   }, []);
+
+  // Admin Auto-patcher to permanently fix photo links in Firestore
+  useEffect(() => {
+    if (isAdmin && athletes.length > 0) {
+      const targetAthlete = athletes.find(a => a.id === 'bOo59GgrVPGfh2XwQJ7X');
+      if (targetAthlete && targetAthlete.photoUrl && targetAthlete.photoUrl.includes('drive.google.com/file/d/')) {
+        const parts = targetAthlete.photoUrl.split('/d/');
+        if (parts.length > 1) {
+          const fileId = parts[1].split('/')[0];
+          const correctUrl = `https://drive.google.com/uc?id=${fileId}`;
+          console.log('Admin detected. Auto-patching Alfredo photoUrl in Firestore DB...');
+          updateDoc(doc(db, 'athletes', targetAthlete.id), { photoUrl: correctUrl })
+            .then(() => console.log('Alfredo document updated directly in Firestore.'))
+            .catch(err => console.error('Error auto-patching Alfredo document:', err));
+        }
+      }
+    }
+  }, [isAdmin, athletes]);
 
   const totalIncome = transactions
     .filter(t => t.type === 'income')

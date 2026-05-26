@@ -87,7 +87,18 @@ export default function AdminPage() {
     if (!user) return;
 
     const unsubAthletes = onSnapshot(query(collection(db, 'athletes'), orderBy('name')), (snap) => {
-      setAthletes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const data = snap.docs.map(doc => {
+        const rawData: any = { id: doc.id, ...doc.data() };
+        if (rawData.photoUrl && rawData.photoUrl.includes('drive.google.com/file/d/')) {
+          const parts = rawData.photoUrl.split('/d/');
+          if (parts.length > 1) {
+            const fileId = parts[1].split('/')[0];
+            rawData.photoUrl = `https://drive.google.com/uc?id=${fileId}`;
+          }
+        }
+        return rawData;
+      });
+      setAthletes(data);
     });
 
     const unsubTransactions = onSnapshot(query(collection(db, 'transactions'), orderBy('date', 'desc'), orderBy('createdAt', 'desc')), (snap) => {

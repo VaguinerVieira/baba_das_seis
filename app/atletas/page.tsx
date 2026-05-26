@@ -66,7 +66,18 @@ export default function AthletesReportPage() {
 
     const qAthletes = query(collection(db, 'athletes'), orderBy('nickname', 'asc'));
     const unsubAthletes = onSnapshot(qAthletes, (snapshot) => {
-      setAthletes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const data = snapshot.docs.map(doc => {
+        const rawData: any = { id: doc.id, ...doc.data() };
+        if (rawData.photoUrl && rawData.photoUrl.includes('drive.google.com/file/d/')) {
+          const parts = rawData.photoUrl.split('/d/');
+          if (parts.length > 1) {
+            const fileId = parts[1].split('/')[0];
+            rawData.photoUrl = `https://drive.google.com/uc?id=${fileId}`;
+          }
+        }
+        return rawData;
+      });
+      setAthletes(data);
       setLoading(false);
     });
 
@@ -467,7 +478,7 @@ export default function AthletesReportPage() {
               >
                 <X className="h-5 w-5" />
               </button>
-              <div className="absolute -bottom-12 left-8">
+              <div className="absolute -bottom-12 right-8">
                 <div className="h-24 w-24 rounded-3xl border-4 border-white overflow-hidden bg-white shadow-lg">
                   {selectedAthlete.photoUrl ? (
                     <div className="relative h-full w-full">
@@ -475,7 +486,7 @@ export default function AthletesReportPage() {
                         src={selectedAthlete.photoUrl} 
                         alt={selectedAthlete.name}
                         fill
-                        className="object-cover"
+                        className="object-cover object-top"
                         referrerPolicy="no-referrer"
                       />
                     </div>
@@ -488,20 +499,20 @@ export default function AthletesReportPage() {
               </div>
             </div>
 
-            <div className="pt-16 p-8">
-              <div className="mb-6">
+            <div className="pt-8 p-6">
+              <div className="mb-4">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-2xl font-bold text-gray-900">{selectedAthlete.nickname || selectedAthlete.name}</h3>
+                  <h3 className="text-2.5xl font-bold text-gray-900">{selectedAthlete.nickname || selectedAthlete.name}</h3>
                   {selectedAthlete.isBoardMember && (
                     <span className="px-2 py-1 bg-cyan-100 text-cyan-700 text-xs font-bold rounded-lg uppercase tracking-wider">
                       Diretoria
                     </span>
                   )}
                 </div>
-                <p className="text-gray-500">{selectedAthlete.name}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{selectedAthlete.name}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
                     <Hash className="h-3 w-3 mr-1" /> Número
@@ -562,7 +573,7 @@ export default function AthletesReportPage() {
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-gray-100 space-y-3">
+              <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
                 {user && isAdmin && (
                   <button 
                     onClick={() => {
@@ -574,14 +585,14 @@ export default function AthletesReportPage() {
                       });
                       setIsTransactionModalOpen(true);
                     }}
-                    className="w-full py-3 bg-cyan-500 text-white rounded-xl font-bold hover:bg-cyan-600 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 duration-200 flex items-center justify-center"
+                    className="w-full py-2.5 bg-cyan-500 text-white rounded-xl font-bold hover:bg-cyan-600 transition-all cursor-pointer hover:scale-[1.01] active:scale-98 duration-200 flex items-center justify-center"
                   >
                     <DollarSign className="h-5 w-5 mr-2" /> Lançar Entrada
                   </button>
                 )}
                 <button 
                   onClick={() => setSelectedAthlete(null)}
-                  className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 duration-200"
+                  className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all cursor-pointer hover:scale-[1.01] active:scale-98 duration-200"
                 >
                   Fechar
                 </button>
