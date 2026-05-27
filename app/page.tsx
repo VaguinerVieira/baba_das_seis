@@ -49,6 +49,7 @@ export default function Dashboard() {
   const [scrolled, setScrolled] = useState(false);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
   const [statementSearchTerm, setStatementSearchTerm] = useState('');
+  const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; name: string } | null>(null);
   const [attendance, setAttendance] = useState<Record<string, string[]>>({});
   const [baseDate] = useState<Date>(() => previousSunday(new Date()));
 
@@ -389,8 +390,30 @@ export default function Dashboard() {
                 compliantAthletes.map((athlete: any) => (
                   <div key={athlete.id} className="flex items-center justify-between p-3 bg-green-50/5 rounded-xl border border-green-200 hover:border-green-300 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center text-green-700 text-sm font-black">
-                        {athlete.paidCount}
+                      <div 
+                        onClick={() => {
+                          if (athlete.photoUrl) {
+                            setLightboxPhoto({ src: athlete.photoUrl, name: athlete.nickname || athlete.name });
+                          }
+                        }}
+                        className={`h-10 w-10 rounded-xl border border-gray-150 overflow-hidden bg-white shadow-sm flex-shrink-0 flex items-center justify-center ${athlete.photoUrl ? 'cursor-pointer hover:scale-[1.08] hover:shadow-md hover:border-cyan-200 active:scale-95 transition-all duration-200' : ''}`}
+                        title={athlete.photoUrl ? "Visualizar foto" : undefined}
+                      >
+                        {athlete.photoUrl ? (
+                          <div className="relative h-full w-full">
+                            <Image 
+                              src={athlete.photoUrl} 
+                              alt={athlete.name}
+                              fill
+                              className="object-cover object-top"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-cyan-50 text-cyan-500 font-bold text-sm">
+                            {athlete.name?.charAt(0) || 'A'}
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
@@ -716,6 +739,43 @@ export default function Dashboard() {
               >
                 Fechar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {lightboxPhoto && (
+        <div 
+          onClick={() => setLightboxPhoto(null)} 
+          className="fixed inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center z-[100] p-4 cursor-zoom-out animate-in fade-in duration-200"
+        >
+          <div className="absolute top-4 right-4 z-[110]">
+            <button 
+              onClick={() => setLightboxPhoto(null)} 
+              className="p-3 bg-white/10 hover:bg-white/20 active:scale-90 text-white rounded-full transition-all duration-150 cursor-pointer shadow-lg backdrop-blur-sm border border-white/10"
+              title="Fechar"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200 p-3.5 flex flex-col cursor-default animate-in zoom-in-95 duration-200"
+          >
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gray-950 border border-gray-100">
+              <Image 
+                src={lightboxPhoto.src} 
+                alt={lightboxPhoto.name}
+                fill
+                className="object-cover object-top"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="pt-4 pb-2 px-3 flex flex-col items-center text-center">
+              <h4 className="text-xl font-black text-gray-900">{lightboxPhoto.name}</h4>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">Atleta Adimplente</p>
             </div>
           </div>
         </div>
