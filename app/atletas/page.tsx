@@ -105,8 +105,6 @@ export default function AthletesReportPage() {
     const debtors = athletes.filter(athlete => {
       if (athlete.status === 'Afastado' || athlete.status === 'Inativo') return false;
       for (let i = 1; i <= currentMonth; i++) {
-        // Ignore Jan-Mar for new athletes
-        if (athlete.isNew && i <= 3) continue;
         if (!athlete.paidMonths?.includes(i)) return true;
       }
       return false;
@@ -116,11 +114,6 @@ export default function AthletesReportPage() {
       const name = athlete.isBoardMember ? `${athlete.nickname || athlete.name} (Diretor)` : (athlete.nickname || athlete.name);
       const row = [name];
       for (let i = 1; i <= currentMonth; i++) {
-        // Ignore Jan-Mar for new athletes
-        if (athlete.isNew && i <= 3) {
-          row.push('ISENTO');
-          continue;
-        }
         const isPaid = athlete.paidMonths?.includes(i);
         row.push(isPaid ? 'OK' : 'PENDENTE');
       }
@@ -423,14 +416,12 @@ export default function AthletesReportPage() {
                     {months.map(month => {
                       const isPaid = athlete.paidMonths?.includes(month.id);
                       const isPastOrCurrent = month.id <= currentMonth;
-                      const isIgnoredForNew = athlete.isNew && month.id <= 3;
-                      const isUnpaidPast = !isPaid && isPastOrCurrent && !isIgnoredForNew;
+                      const isUnpaidPast = !isPaid && isPastOrCurrent;
                       
                       return (
                         <div key={month.id} className={`flex flex-col items-center p-1.5 sm:p-2 rounded-xl border transition-all ${
                           isPaid ? 'bg-green-50 border-green-100' : 
                           isUnpaidPast ? 'bg-red-50 border-red-100' :
-                          isIgnoredForNew ? 'bg-gray-50 border-gray-100 opacity-60' :
                           'bg-gray-50 border-gray-100 opacity-40'
                         }`}>
                           <span className={`text-[8px] sm:text-[10px] font-bold uppercase mb-0.5 sm:mb-1 ${

@@ -152,9 +152,6 @@ export default function Dashboard() {
     .map(athlete => {
       const pendingMonths = [];
       for (let i = 1; i <= paymentDueLimit; i++) {
-        // Ignore Jan (1), Feb (2), Mar (3) for "New" (isNew) athletes
-        if (athlete.isNew && i <= 3) continue;
-        
         if (!athlete.paidMonths?.includes(i)) {
           pendingMonths.push(monthAbbr[i - 1]);
         }
@@ -183,11 +180,11 @@ export default function Dashboard() {
       return a.birthdayDay - b.birthdayDay;
     });
 
-  // Compliant Athletes (Paid until current month depending on the day of the month, excluding board members, new athletes, and exempt athletes)
+  // Compliant Athletes (Paid until current month depending on the day of the month, excluding board members and exempt athletes)
   const compliantAthletes = athletes
     .filter(athlete => {
       if (athlete.status === 'Afastado' || athlete.status === 'Inativo') return false;
-      if (athlete.isBoardMember || athlete.isNew || athlete.isExempt) return false;
+      if (athlete.isBoardMember || athlete.isExempt) return false;
       const requiredMonths = Array.from({ length: paymentDueLimit }, (_, i) => i + 1);
       const paid = athlete.paidMonths || [];
       return requiredMonths.every(m => paid.includes(m));
