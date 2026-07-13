@@ -11,6 +11,7 @@ import {
   TrendingDown, 
   Users, 
   User,
+  Home,
   Cake,
   DollarSign, 
   ArrowRight,
@@ -223,7 +224,7 @@ export default function Dashboard() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002874]"></div>
       </div>
     );
   }
@@ -231,51 +232,54 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       {/* Navbar */}
-      <nav className={`bg-white border-b border-gray-300 sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'py-2' : ''}`}>
+      <nav className={`bg-white border-b border-gray-300 sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'py-1 sm:py-2' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`flex flex-col sm:flex-row justify-between items-center transition-all duration-300 ${scrolled ? 'h-auto sm:h-28' : 'h-auto sm:h-40 py-4 sm:py-0'}`}>
-            <div className={`flex flex-col items-center sm:flex-row sm:items-center transition-all duration-300 ${scrolled ? 'pt-0' : 'pt-5 sm:pt-0'}`}>
+          <div className={`flex flex-col sm:flex-row justify-between items-center transition-all duration-300 ${scrolled ? 'h-auto sm:h-20' : 'h-auto sm:h-28 py-3 sm:py-0'}`}>
+            <div className={`flex flex-col items-center sm:flex-row sm:items-center transition-all duration-300 ${scrolled ? 'pt-0' : 'pt-3 sm:pt-0'}`}>
               <Image 
                 src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
                 alt="Logo Baba das Seis" 
                 width={800} 
                 height={320} 
-                className={`w-auto transition-all duration-300 sm:mr-4 ${scrolled ? 'h-12 sm:h-24' : 'h-32 sm:h-32'}`}
+                className={`w-auto transition-all duration-300 sm:mr-4 ${scrolled ? 'h-10 sm:h-16' : 'h-20 sm:h-24'}`}
                 priority
                 referrerPolicy="no-referrer"
               />
-              <span className={`text-cyan-600 font-bold text-xl mt-2 sm:hidden transition-all duration-300 overflow-hidden ${scrolled ? 'h-0 opacity-0 mt-0' : 'h-auto opacity-100'}`}>Gestão Financeira</span>
+              <span className={`text-[#002874] font-black text-lg sm:text-2xl mt-1.5 sm:mt-0 transition-all duration-300 overflow-hidden sm:border-l sm:border-gray-300 sm:pl-4 ${scrolled ? 'max-sm:h-0 max-sm:opacity-0 max-sm:mt-0' : 'h-auto opacity-100'}`}>Gestão Financeira</span>
             </div>
-            <div className={`flex items-center space-x-2 sm:space-x-4 transition-all duration-300 ${scrolled ? 'mt-2 sm:mt-0' : 'mt-4 sm:mt-0'}`}>
+            <div className={`flex items-center space-x-2 sm:space-x-4 transition-all duration-300 ${scrolled ? 'mt-2 sm:mt-0' : 'mt-3 sm:mt-0'}`}>
               <a 
                 href="https://babadasseis.netlify.app/" 
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
               >
-                Início
+                <Home className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
+                <span>Início</span>
               </a>
               <a 
                 href="https://drive.google.com/file/d/15IdR0y2pQZdLiaF60dPTaNDR1PMTWZLT/view?usp=sharing" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
               >
-                Regulamento
+                <FileText className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
+                <span>Regulamento</span>
               </a>
               <Link 
                 href="/presenca" 
-                className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
               >
-                Presença
+                <Calendar className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
+                <span>Presença</span>
               </Link>
               {user && isAdmin ? (
                 <>
-                  <Link href="/admin" className="text-xs sm:text-sm font-medium text-gray-600 hover:text-cyan-500 flex items-center cursor-pointer">
+                  <Link href="/admin" className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all">
                     <Settings className="h-4 w-4 mr-1" />
                     <span className="hidden xs:inline">Painel</span>
                   </Link>
                   <button 
                     onClick={() => logout()}
-                    className="text-xs sm:text-sm font-medium text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
+                    className="text-xs sm:text-sm font-semibold text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
                   >
                     <LogOut className="h-4 w-4 mr-1" />
                     <span className="hidden xs:inline">Sair</span>
@@ -284,14 +288,15 @@ export default function Dashboard() {
               ) : user ? (
                 <button 
                   onClick={() => logout()}
-                  className="text-xs sm:text-sm font-medium text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 duration-200"
+                  className="text-xs sm:text-sm font-semibold text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
                   <span className="hidden xs:inline">Sair</span>
                 </button>
               ) : (
-                <Link href="/login" className="text-xs sm:text-sm font-medium text-cyan-500 hover:text-cyan-600 cursor-pointer">
-                  Entrar
+                <Link href="/login" className="text-xs sm:text-sm font-bold text-[#002874] hover:text-[#0069d3] flex items-center cursor-pointer transition-all">
+                  <User className="h-4 w-4 mr-1" />
+                  <span>Entrar</span>
                 </Link>
               )}
             </div>
@@ -300,71 +305,127 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Financeiro</h1>
-            <p className="text-sm text-gray-500 mt-1">Resumo das finanças do grupo Baba das Seis</p>
-          </div>
+        {/* Header containing action buttons */}
+        <div className="mb-6 flex justify-end">
           <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
             <Link 
               href="/atletas"
-              className="flex items-center justify-center px-4 sm:px-6 py-3 bg-cyan-500 text-white rounded-xl font-bold hover:bg-cyan-600 transition-all shadow-lg shadow-cyan-100 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-sm sm:text-base"
+              className="flex items-center justify-center px-4 sm:px-6 py-3 bg-[#ffba00] text-[#000002] rounded-xl font-black hover:bg-[#ffba00]/90 transition-all shadow-lg shadow-amber-200/50 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-sm sm:text-base border border-[#ffba00]/30"
             >
-              <Users className="h-5 w-5 mr-2" /> Atletas
+              <Users className="h-5 w-5 mr-2 text-[#000002]" /> Atletas
             </Link>
             <button 
               onClick={() => setIsStatementModalOpen(true)}
-              className="flex items-center justify-center px-4 sm:px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-900 transition-all shadow-lg shadow-gray-200 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-sm sm:text-base"
+              className="flex items-center justify-center px-4 sm:px-6 py-3 bg-[#002874] text-white rounded-xl font-extrabold hover:bg-[#002874]/90 transition-all shadow-lg shadow-blue-900/10 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-sm sm:text-base border border-[#002874]/20"
             >
               <FileText className="h-5 w-5 mr-2" /> Extrato
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-blue-50 p-6 rounded-2xl shadow-sm border border-blue-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          {/* Cartão Financeiro Compacto e Unificado */}
+          <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-400">Resumo Financeiro</span>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${balance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${balance >= 0 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`} />
+                  {balance >= 0 ? 'Superávit' : 'Déficit'}
+                </span>
               </div>
-              <span className="text-xs font-medium text-blue-600 bg-white/80 px-2 py-1 rounded-full">+12%</span>
+              
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-b border-gray-100 pb-5 mb-5">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Saldo Atual</p>
+                  <h3 className={`text-3xl sm:text-4xl font-black tracking-tight mt-1 ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    <span className="text-lg sm:text-xl font-bold mr-1">R$</span>
+                    {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </h3>
+                </div>
+                <div className="mt-3 sm:mt-0 flex items-center gap-2 text-xs text-gray-400">
+                  <DollarSign className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
+                  <span>Atualizado em tempo real</span>
+                </div>
+              </div>
             </div>
-            <p className="text-sm font-medium text-blue-600/70">Total de Entradas</p>
-            <h3 className="text-2xl font-bold text-gray-800">{totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#0069d3]/10 hover:bg-[#0069d3]/15 p-4 rounded-xl border border-[#0069d3]/35 shadow-md transition-all duration-300">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <TrendingUp className="h-4 w-4 text-[#0069d3]" />
+                  <span className="text-xs font-bold text-[#0069d3] uppercase">Entradas</span>
+                </div>
+                <p className="text-lg sm:text-xl font-black text-gray-800">
+                  <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
+                  {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+
+              <div className="bg-red-100 hover:bg-red-200/90 p-4 rounded-xl border border-red-300 shadow-md transition-all duration-300">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                  <span className="text-xs font-bold text-red-600 uppercase">Saídas</span>
+                </div>
+                <p className="text-lg sm:text-xl font-black text-gray-800">
+                  <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
+                  {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="bg-red-50/50 p-6 rounded-2xl shadow-sm border border-red-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
-                <TrendingDown className="h-6 w-6 text-red-600" />
+          {/* Cartão Atletas */}
+          <div className="bg-amber-100/90 p-6 rounded-2xl shadow-md border border-amber-300 flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-amber-300/60">
+                <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
+                  <Users className="h-5 w-5" />
+                </div>
+                <h4 className="font-bold text-gray-800 text-lg">Atletas</h4>
               </div>
-              <span className="text-xs font-medium text-red-600 bg-white/80 px-2 py-1 rounded-full">-5%</span>
-            </div>
-            <p className="text-sm font-medium text-red-600/70">Total de Saídas</p>
-            <h3 className="text-2xl font-bold text-gray-800">{totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
-          </div>
 
-          <div className="bg-emerald-50 p-6 rounded-2xl shadow-sm border border-emerald-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
-                <DollarSign className="h-6 w-6 text-emerald-600" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-emerald-600/70">Saldo Atual</p>
-            <h3 className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-              {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </h3>
-          </div>
+              <div className="space-y-3">
+                {/* Ativos */}
+                <div className="flex items-center justify-between p-2.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span className="text-sm font-semibold text-gray-600">Ativos</span>
+                  </div>
+                  <span className="text-lg font-black text-gray-800">
+                    {athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo').length}
+                  </span>
+                </div>
 
-          <div className="bg-amber-50 p-6 rounded-2xl shadow-sm border border-amber-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-white/80 rounded-lg shadow-sm">
-                <Users className="h-6 w-6 text-amber-600" />
+                {/* Inativo */}
+                <div className="flex items-center justify-between p-2.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <span className="text-sm font-semibold text-gray-600">Inativo</span>
+                  </div>
+                  <span className="text-lg font-black text-gray-800">
+                    {athletes.filter(a => a.status === 'Inativo').length}
+                  </span>
+                </div>
+
+                {/* Afastado */}
+                <div className="flex items-center justify-between p-2.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <span className="text-sm font-semibold text-gray-600">Afastado</span>
+                  </div>
+                  <span className="text-lg font-black text-gray-800">
+                    {athletes.filter(a => a.status === 'Afastado').length}
+                  </span>
+                </div>
               </div>
             </div>
-            <p className="text-sm font-medium text-amber-600/70">Atletas Ativos</p>
-            <h3 className="text-2xl font-bold text-gray-800">{athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo').length}</h3>
+
+            <div className="mt-4 pt-3 border-t border-amber-300 text-right">
+              <span className="text-[10px] font-bold text-amber-800 uppercase">
+                Total: {athletes.length} cadastrados
+              </span>
+            </div>
           </div>
         </div>
 
@@ -393,7 +454,7 @@ export default function Dashboard() {
                             setLightboxPhoto({ src: athlete.photoUrl, name: athlete.nickname || athlete.name });
                           }
                         }}
-                        className={`h-10 w-10 rounded-xl border border-gray-150 overflow-hidden bg-white shadow-sm flex-shrink-0 flex items-center justify-center ${athlete.photoUrl ? 'cursor-pointer hover:scale-[1.08] hover:shadow-md hover:border-cyan-200 active:scale-95 transition-all duration-200' : ''}`}
+                        className={`h-10 w-10 rounded-xl border border-gray-150 overflow-hidden bg-white shadow-sm flex-shrink-0 flex items-center justify-center ${athlete.photoUrl ? 'cursor-pointer hover:scale-[1.08] hover:shadow-md hover:border-[#0069d3]/40 active:scale-95 transition-all duration-200' : ''}`}
                         title={athlete.photoUrl ? "Visualizar foto" : undefined}
                       >
                         {athlete.photoUrl ? (
@@ -407,7 +468,7 @@ export default function Dashboard() {
                             />
                           </div>
                         ) : (
-                          <div className="h-full w-full flex items-center justify-center bg-cyan-50 text-cyan-500 font-bold text-sm">
+                          <div className="h-full w-full flex items-center justify-center bg-blue-50 text-[#002874] font-bold text-sm">
                             {athlete.name?.charAt(0) || 'A'}
                           </div>
                         )}
@@ -454,7 +515,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
                         {athlete.isNew && (
-                          <span className="text-[9px] font-black text-white bg-cyan-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
+                          <span className="text-[9px] font-black text-white bg-[#0069d3] px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
                             Novo
                           </span>
                         )}
@@ -513,7 +574,7 @@ export default function Dashboard() {
                     .map(athlete => (
                     <tr key={athlete.id} className="hover:bg-gray-50 group">
                       <td className="py-2.5 px-2">
-                        <span className="text-sm font-bold text-gray-800 line-clamp-1 group-hover:text-cyan-600 transition-colors">
+                        <span className="text-sm font-bold text-gray-800 line-clamp-1 group-hover:text-[#0069d3] transition-colors">
                           {athlete.nickname || athlete.name}
                         </span>
                       </td>
@@ -546,15 +607,15 @@ export default function Dashboard() {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-[480px] flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                <Cake className="h-5 w-5 mr-2 text-cyan-500" /> Niver da Semana
+                <Cake className="h-5 w-5 mr-2 text-[#ffba00]" /> Niver da Semana
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {weeklyBirthdays.length > 0 ? (
                 weeklyBirthdays.map((athlete: any) => (
-                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-cyan-50/30 rounded-xl border border-cyan-100/50 hover:bg-cyan-50 transition-colors">
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-[#002874]/5 rounded-xl border border-[#002874]/15 hover:bg-[#002874]/10 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-white shadow-sm bg-cyan-100 flex-shrink-0">
+                      <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-white shadow-sm bg-[#002874]/10 flex-shrink-0">
                         {athlete.photoUrl ? (
                           <div className="relative h-full w-full">
                             <Image 
@@ -566,7 +627,7 @@ export default function Dashboard() {
                             />
                           </div>
                         ) : (
-                          <div className="h-full w-full flex items-center justify-center text-cyan-600 font-bold text-lg">
+                          <div className="h-full w-full flex items-center justify-center text-[#002874] font-bold text-lg">
                             {athlete.nickname?.charAt(0) || athlete.name.charAt(0)}
                           </div>
                         )}
@@ -576,9 +637,9 @@ export default function Dashboard() {
                         <p className="text-[10px] text-gray-500 uppercase font-medium line-clamp-1">{athlete.name}</p>
                       </div>
                     </div>
-                    <div className="bg-white px-2 py-1 rounded-lg border border-cyan-100 shadow-sm flex flex-col items-center min-w-[50px] flex-shrink-0 ml-2">
-                       <span className="text-[10px] font-bold text-cyan-400 uppercase leading-none mb-1">DATA</span>
-                       <span className="text-sm font-black text-cyan-600">
+                    <div className="bg-white px-2 py-1 rounded-lg border border-[#002874]/20 shadow-sm flex flex-col items-center min-w-[50px] flex-shrink-0 ml-2">
+                       <span className="text-[10px] font-bold text-[#0069d3] uppercase leading-none mb-1">DATA</span>
+                       <span className="text-sm font-black text-[#002874]">
                          {String(athlete.birthdayDay).padStart(2, '0')}/{String(athlete.birthdayMonth).padStart(2, '0')}
                        </span>
                     </div>
@@ -600,7 +661,7 @@ export default function Dashboard() {
             <h3 className="text-lg font-bold text-gray-900">Transações Recentes</h3>
             <button 
               onClick={() => setIsStatementModalOpen(true)}
-              className="px-4 py-2 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 rounded-xl text-sm font-semibold transition-all flex items-center border border-cyan-100 shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-200"
+              className="px-4 py-2 bg-blue-50 text-[#002874] hover:bg-blue-100 rounded-xl text-sm font-bold transition-all flex items-center border border-blue-100 shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-200"
             >
               Ver todas <ArrowRight className="h-4 w-4 ml-2" />
             </button>
@@ -622,7 +683,7 @@ export default function Dashboard() {
                       <div className="flex flex-col">
                         <span>{t.description || '-'}</span>
                         {t.isMonthlyFee && t.athleteId && (
-                          <span className="text-[10px] text-cyan-600 font-bold uppercase">
+                          <span className="text-[10px] text-[#002874] font-bold uppercase">
                             Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
                             {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
                           </span>
@@ -630,7 +691,7 @@ export default function Dashboard() {
                       </div>
                     </td>
                     <td className={`px-6 py-4 text-sm font-bold text-right ${
-                      t.type === 'income' ? 'text-cyan-600' : 'text-red-600'
+                      t.type === 'income' ? 'text-[#002874]' : 'text-red-600'
                     }`}>
                       {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
@@ -664,11 +725,11 @@ export default function Dashboard() {
                     placeholder="Filtrar transações..."
                     value={statementSearchTerm}
                     onChange={(e) => setStatementSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-black outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2 bg-white border-2 border-[#002874] rounded-xl text-sm focus:ring-2 focus:ring-[#0069d3] outline-none transition-all"
                   />
                 </div>
                 <button onClick={() => { setIsStatementModalOpen(false); setStatementSearchTerm(''); }} className="text-gray-400 hover:text-gray-600 p-2 cursor-pointer hover:scale-110 active:scale-90 transition-all duration-200">
-                  <PlusCircle className="h-6 w-6 rotate-45" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
             </div>
@@ -685,10 +746,35 @@ export default function Dashboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-300">
                   {transactions
-                    .filter(t => 
-                      (t.description?.toLowerCase().includes(statementSearchTerm.toLowerCase())) || 
-                      (t.category?.toLowerCase().includes(statementSearchTerm.toLowerCase()))
-                    )
+                    .filter(t => {
+                      const term = statementSearchTerm.toLowerCase();
+                      const desc = (t.description || '').toLowerCase();
+                      const cat = (t.category || '').toLowerCase();
+                      
+                      let athleteMatch = false;
+                      let refMonthMatch = false;
+                      
+                      if (t.isMonthlyFee && t.athleteId) {
+                        const athlete = athletes.find(a => a.id === t.athleteId);
+                        if (athlete) {
+                          const name = (athlete.name || '').toLowerCase();
+                          const nickname = (athlete.nickname || '').toLowerCase();
+                          athleteMatch = name.includes(term) || nickname.includes(term);
+                        }
+                        
+                        if (t.referenceMonth) {
+                          const monthIdx = parseInt(t.referenceMonth) - 1;
+                          if (monthIdx >= 0 && monthIdx < 12) {
+                            const abbr = monthAbbr[monthIdx].toLowerCase();
+                            const fullMonths = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+                            const full = fullMonths[monthIdx];
+                            refMonthMatch = abbr.includes(term) || full.includes(term);
+                          }
+                        }
+                      }
+                      
+                      return desc.includes(term) || cat.includes(term) || athleteMatch || refMonthMatch;
+                    })
                     .map(t => (
                       <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
@@ -698,7 +784,7 @@ export default function Dashboard() {
                               href={t.externalLink} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center p-1.5 bg-cyan-50 text-cyan-600 rounded-lg hover:bg-cyan-100 transition-colors border border-cyan-100"
+                              className="inline-flex items-center justify-center p-1.5 bg-blue-50 text-[#002874] rounded-lg hover:bg-blue-100 transition-colors border border-blue-100"
                               title="Ver Comprovante"
                             >
                               <FileSearch className="h-4 w-4" />
@@ -711,7 +797,7 @@ export default function Dashboard() {
                           <div className="flex flex-col">
                             <span>{t.description || '-'}</span>
                             {t.isMonthlyFee && t.athleteId && (
-                              <span className="text-[10px] text-cyan-600 font-bold uppercase">
+                              <span className="text-[10px] text-[#002874] font-bold uppercase">
                                 Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
                                 {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
                               </span>
@@ -719,7 +805,7 @@ export default function Dashboard() {
                           </div>
                         </td>
                         <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${
-                          t.type === 'income' ? 'text-cyan-600' : 'text-red-600'
+                          t.type === 'income' ? 'text-[#002874]' : 'text-red-600'
                         }`}>
                           {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>

@@ -12,4 +12,11 @@
   --color-cyan-800: #075985;
   --color-cyan-900: #0c4a6e;
   --color-cyan-950: #082f49;
+
+  --color-brand-black: #000002;
+  --color-brand-yellow: #ffba00;
+  --color-brand-blue-dark: #002874;
+  --color-brand-blue-light: #0069d3;
+  --color-brand-white: #ffffff;
+  --color-brand-gray-light: #f8fafc;
 }

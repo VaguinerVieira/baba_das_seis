@@ -265,7 +265,7 @@ export default function AthletesReportPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002874]"></div>
       </div>
     );
   }
@@ -280,13 +280,13 @@ export default function AthletesReportPage() {
               <Link href="/" className="mr-2 sm:mr-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer hover:scale-110 active:scale-90 duration-200">
                 <ArrowLeft className="h-5 w-5 sm:h-6 w-6 text-gray-600" />
               </Link>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-800">Relatório</h1>
+              <h1 className="text-lg sm:text-xl font-extrabold text-[#002874]">Relatório</h1>
             </div>
             <div className="flex items-center gap-2 relative">
               <div className="relative">
                 <button 
                   onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-                  className="flex items-center px-3 sm:px-4 py-2 bg-cyan-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-cyan-600 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 shadow-sm"
+                  className="flex items-center px-3 sm:px-4 py-2 bg-[#002874] text-white rounded-xl text-xs sm:text-sm font-extrabold hover:bg-[#002874]/90 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 shadow-md shadow-blue-900/10"
                 >
                   <FileDown className="h-4 w-4 mr-1 sm:mr-2" /> Exportar <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${isExportMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -312,7 +312,7 @@ export default function AthletesReportPage() {
                           exportToPDF();
                           setIsExportMenuOpen(false);
                         }}
-                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-cyan-50 transition-colors"
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
                       >
                         <FileDown className="h-4 w-4 mr-2" /> Situação Geral
                       </button>
@@ -329,7 +329,7 @@ export default function AthletesReportPage() {
         {/* Search and Header */}
         <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Mensalidades 2026</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-[#002874]">Mensalidades 2026</h2>
             <p className="text-sm text-gray-500 mt-1">Acompanhamento detalhado de pagamentos e dados dos atletas</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-3 w-full lg:w-auto">
@@ -343,27 +343,11 @@ export default function AthletesReportPage() {
                   setSelectedMonth(val);
                   setSelectedDay('all'); // Reset day when month changes
                 }}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm appearance-none"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0069d3] outline-none transition-all shadow-sm appearance-none"
               >
                 <option value="all">Niver do Mês</option>
                 {months.map(m => (
                   <option key={m.id} value={m.id}>{m.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Day Filter */}
-            <div className="relative w-full lg:w-36">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <select
-                value={selectedDay}
-                disabled={selectedMonth === 'all'}
-                onChange={(e) => setSelectedDay(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                className={`w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm appearance-none ${selectedMonth === 'all' ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <option value="all">Niver do Dia</option>
-                {selectedMonth !== 'all' && Array.from({ length: getDaysInMonth(selectedMonth) }, (_, i) => i + 1).map(day => (
-                  <option key={day} value={day}>{day}</option>
                 ))}
               </select>
             </div>
@@ -375,7 +359,7 @@ export default function AthletesReportPage() {
                 placeholder="Buscar Atleta..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-cyan-50/50 border border-cyan-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium placeholder:text-cyan-400"
+                className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#002874] rounded-xl text-sm focus:ring-2 focus:ring-[#0069d3] outline-none transition-all shadow-sm font-medium placeholder:text-gray-400 text-[#000002]"
               />
             </div>
           </div>
@@ -442,7 +426,7 @@ export default function AthletesReportPage() {
                   <div className="flex items-center justify-end">
                     <button 
                       onClick={() => setSelectedAthlete(athlete)}
-                      className="flex items-center justify-center px-4 py-2 bg-cyan-50 text-cyan-700 rounded-xl text-sm font-bold hover:bg-cyan-100 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 border border-cyan-100"
+                      className="flex items-center justify-center px-4 py-2 bg-[#002874]/5 text-[#002874] rounded-xl text-sm font-bold hover:bg-[#002874]/10 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 border border-[#002874]/10"
                     >
                       <Info className="h-4 w-4 mr-2" /> Detalhes
                     </button>
@@ -462,7 +446,7 @@ export default function AthletesReportPage() {
       {selectedAthlete && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="relative h-32 bg-cyan-500">
+            <div className="relative h-32 bg-gradient-to-r from-[#002874] to-[#0069d3]">
               <button 
                 onClick={() => setSelectedAthlete(null)}
                 className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 text-white rounded-full transition-all cursor-pointer hover:scale-110 active:scale-90"
@@ -482,7 +466,7 @@ export default function AthletesReportPage() {
                       />
                     </div>
                   ) : (
-                    <div className="h-full w-full bg-cyan-100 flex items-center justify-center text-cyan-600 font-bold text-3xl">
+                    <div className="h-full w-full bg-blue-50 flex items-center justify-center text-[#002874] font-bold text-3xl">
                       {selectedAthlete.name.charAt(0)}
                     </div>
                   )}
@@ -495,7 +479,7 @@ export default function AthletesReportPage() {
                 <div className="flex items-center gap-3">
                   <h3 className="text-2.5xl font-bold text-gray-900">{selectedAthlete.nickname || selectedAthlete.name}</h3>
                   {selectedAthlete.isBoardMember && (
-                    <span className="px-2 py-1 bg-cyan-100 text-cyan-700 text-xs font-bold rounded-lg uppercase tracking-wider">
+                    <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-lg uppercase tracking-wider">
                       Diretoria
                     </span>
                   )}
@@ -576,7 +560,7 @@ export default function AthletesReportPage() {
                       });
                       setIsTransactionModalOpen(true);
                     }}
-                    className="w-full py-2.5 bg-cyan-500 text-white rounded-xl font-bold hover:bg-cyan-600 transition-all cursor-pointer hover:scale-[1.01] active:scale-98 duration-200 flex items-center justify-center"
+                    className="w-full py-2.5 bg-[#002874] text-white rounded-xl font-bold hover:bg-[#002874]/90 transition-all cursor-pointer hover:scale-[1.01] active:scale-98 duration-200 flex items-center justify-center shadow-md"
                   >
                     <DollarSign className="h-5 w-5 mr-2" /> Lançar Entrada
                   </button>
@@ -599,7 +583,7 @@ export default function AthletesReportPage() {
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-cyan-500" /> Lançar Mensalidade
+                <DollarSign className="h-5 w-5 mr-2 text-[#002874]" /> Lançar Mensalidade
               </h3>
               <button onClick={() => setIsTransactionModalOpen(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer hover:scale-110 active:scale-90 transition-all duration-200">
                 <X className="h-6 w-6" />
@@ -638,7 +622,7 @@ export default function AthletesReportPage() {
                     required 
                     value={transactionData.amount !== undefined ? formatCurrency(transactionData.amount) : ''} 
                     onChange={handleCurrencyChange}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#0069d3] focus:border-transparent outline-none transition-all"
                     placeholder="R$ 0,00"
                   />
                 </div>
@@ -648,7 +632,7 @@ export default function AthletesReportPage() {
                     required 
                     value={transactionData.referenceMonth || ''} 
                     onChange={e => setTransactionData({...transactionData, referenceMonth: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#0069d3] focus:border-transparent outline-none transition-all"
                   >
                     <option value="">Selecionar</option>
                     {months.map((m) => (
@@ -663,7 +647,7 @@ export default function AthletesReportPage() {
                   type="date" required 
                   value={transactionData.date || ''} 
                   onChange={e => setTransactionData({...transactionData, date: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#0069d3] focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div>
@@ -672,12 +656,12 @@ export default function AthletesReportPage() {
                   type="text" required 
                   value={transactionData.description || ''} 
                   onChange={e => setTransactionData({...transactionData, description: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#0069d3] focus:border-transparent outline-none transition-all"
                 />
               </div>
               <button 
                 type="submit"
-                className="w-full py-4 bg-cyan-500 text-white rounded-xl font-bold hover:bg-cyan-600 transition-all shadow-lg shadow-cyan-100 flex items-center justify-center cursor-pointer hover:scale-[1.02] active:scale-95 duration-200"
+                className="w-full py-4 bg-[#ffba00] text-[#000002] rounded-xl font-black hover:bg-[#e0a400] transition-all shadow-lg shadow-amber-200/40 flex items-center justify-center cursor-pointer hover:scale-[1.02] active:scale-95 duration-200"
               >
                 <Save className="h-5 w-5 mr-2" /> Confirmar Lançamento
               </button>
