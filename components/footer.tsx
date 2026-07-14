@@ -26,7 +26,7 @@ export default function Footer() {
           <div className="p-1 rounded-lg group-hover:bg-cyan-50 transition-colors">
             <FileText className="h-5 w-5" />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5 text-center">Regulamento</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5 text-center">Regras</span>
         </a>
       </div>
     </footer>

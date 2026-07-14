@@ -49,6 +49,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
+  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [statementSearchTerm, setStatementSearchTerm] = useState('');
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; name: string } | null>(null);
   const [attendance, setAttendance] = useState<Record<string, string[]>>({});
@@ -255,15 +256,13 @@ export default function Dashboard() {
                 <Home className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
                 <span>Início</span>
               </a>
-              <a 
-                href="https://drive.google.com/file/d/15IdR0y2pQZdLiaF60dPTaNDR1PMTWZLT/view?usp=sharing" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
+              <button 
+                onClick={() => setIsRulesModalOpen(true)}
+                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all border-none bg-transparent outline-none"
               >
                 <FileText className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
-                <span>Regulamento</span>
-              </a>
+                <span>Regras</span>
+              </button>
               <Link 
                 href="/presenca" 
                 className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
@@ -818,6 +817,133 @@ export default function Dashboard() {
             <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end">
               <button 
                 onClick={() => setIsStatementModalOpen(false)}
+                className="px-6 py-2 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rules Modal */}
+      {isRulesModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col border border-gray-300 animate-in zoom-in-95 duration-200"
+          >
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#002874]/10 text-[#002874] rounded-xl">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">Regras do Baba</h3>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Regulamento Interno - Baba das Seis</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsRulesModalOpen(false)} 
+                className="text-gray-400 hover:text-gray-600 p-2 cursor-pointer hover:scale-110 active:scale-90 transition-all duration-200"
+                title="Fechar"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar text-sm text-gray-700 leading-relaxed">
+              <div className="space-y-3.5">
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 1º</strong>
+                  Só poderá jogar atletas escritos no Grupo Baba das Seis.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 2º</strong>
+                  Não é permitido, participar de qualquer baba, o atleta que apresentar qualquer indício de embriaguez.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 3º</strong>
+                  Estará sujeito a punições, o atleta que fizer críticas a diretoria do grupo ou ao presente regulamento.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 4º</strong>
+                  Cada atleta, com exceção da diretoria, deverá contribuir mensalmente, com um valor ora acordado, tendo como base o dia 10 (dez) de cada mês. O mesmo poderá ser automaticamente desligado caso apresente 2 (dois) meses de inadimplência.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 5º</strong>
+                  O atleta poderá ser automaticamente desligado caso apresente ausência em quatro babas consecutivos.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 6º</strong>
+                  Para participar de cada baba, é obrigatório colocar o nome na relação de presença do dia, até as <span className="font-extrabold text-[#002874]">06:15h (Seis horas e quinze minutos) em ponto!</span>
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 7º</strong>
+                  O atleta que agredir moralmente o companheiro, será julgado e punido.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 8º</strong>
+                  O atleta que agredir fisicamente o companheiro, será automaticamente desligado.
+                </div>
+                
+                <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100">
+                  <strong className="text-amber-900 font-bold block mb-1.5">Art. 9º</strong>
+                  O atleta que receber cartão amarelo:
+                  <ul className="list-disc pl-5 mt-1.5 space-y-1 text-gray-700">
+                    <li><span className="font-semibold text-gray-900">1º Cartão Amarelo:</span> Descansa 5 (cinco) minutos</li>
+                    <li><span className="font-semibold text-gray-900">2º Cartão Amarelo:</span> Descansa 10 (dez) minutos</li>
+                    <li><span className="font-semibold text-gray-900">3º Cartão Amarelo:</span> Descansa 15 (quinze) minutos</li>
+                  </ul>
+                  <p className="mt-2 text-xs italic text-amber-800 font-semibold bg-white p-2 rounded border border-amber-100">
+                    Obs.: Caso o árbitro julgue o lance procedente a vermelho, assim será feito!
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 10º</strong>
+                  O atleta que receber cartão vermelho, cumprirá suspensão automática de 1 (um) baba. O mesmo será julgado se necessário.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 11º</strong>
+                  O atleta que entrar na partida até 10 (dez) minutos do primeiro tempo, entrará no sorteio do segundo tempo.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 12º</strong>
+                  Só poderá jogar o atleta que estiver devidamente uniformizado.
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <strong className="text-gray-900 font-bold block mb-1">Art. 13º</strong>
+                  O baba deverá ser dividido pelos responsáveis do dia e entregue até as 5:50h. A escolha dos reservas acontece no intervalo entre os tempos!
+                </div>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col gap-2">
+                <div className="p-3 bg-blue-50 text-blue-800 rounded-xl text-xs font-semibold text-center border border-blue-100">
+                  Qualquer alteração no regulamento interno será imediatamente informada!!
+                </div>
+                <div className="text-right text-[11px] text-gray-400 font-medium">
+                  Última alteração: 13/07/2026 às 17:55
+                </div>
+              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end">
+              <button 
+                onClick={() => setIsRulesModalOpen(false)}
                 className="px-6 py-2 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
               >
                 Fechar
