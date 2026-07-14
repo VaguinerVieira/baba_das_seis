@@ -429,53 +429,109 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Cartão Financeiro Compacto e Unificado */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between mb-8">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-black uppercase tracking-wider text-gray-400">Resumo Financeiro</span>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${balance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${balance >= 0 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`} />
-                {balance >= 0 ? 'Superávit' : 'Déficit'}
-              </span>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-b border-gray-100 pb-5 mb-5">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Saldo Atual</p>
-                <h3 className={`text-3xl sm:text-4xl font-black tracking-tight mt-1 ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  <span className="text-lg sm:text-xl font-bold mr-1">R$</span>
-                  {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </h3>
+        {/* Grid de Resumos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Cartão Financeiro Compacto e Unificado */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-400">Resumo Financeiro</span>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${balance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${balance >= 0 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`} />
+                  {balance >= 0 ? 'Superávit' : 'Déficit'}
+                </span>
               </div>
-              <div className="mt-3 sm:mt-0 flex items-center gap-2 text-xs text-gray-400">
-                <DollarSign className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
-                <span>Atualizado em tempo real</span>
+              
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-b border-gray-100 pb-5 mb-5">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Saldo Atual</p>
+                  <h3 className={`text-3xl sm:text-4xl font-black tracking-tight mt-1 ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    <span className="text-lg sm:text-xl font-bold mr-1">R$</span>
+                    {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </h3>
+                </div>
+                <div className="mt-3 sm:mt-0 flex items-center gap-2 text-xs text-gray-400">
+                  <DollarSign className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
+                  <span>Atualizado em tempo real</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#0069d3]/10 hover:bg-[#0069d3]/15 p-4 rounded-xl border border-[#0069d3]/35 shadow-md transition-all duration-300">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <TrendingUp className="h-4 w-4 text-[#0069d3]" />
+                  <span className="text-xs font-bold text-[#0069d3] uppercase">Entradas</span>
+                </div>
+                <p className="text-lg sm:text-xl font-black text-gray-800">
+                  <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
+                  {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+
+              <div className="bg-red-100 hover:bg-red-200/90 p-4 rounded-xl border border-red-300 shadow-md transition-all duration-300">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                  <span className="text-xs font-bold text-red-600 uppercase">Saídas</span>
+                </div>
+                <p className="text-lg sm:text-xl font-black text-gray-800">
+                  <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
+                  {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#0069d3]/10 hover:bg-[#0069d3]/15 p-4 rounded-xl border border-[#0069d3]/35 shadow-md transition-all duration-300">
-              <div className="flex items-center gap-2 mb-1.5">
-                <TrendingUp className="h-4 w-4 text-[#0069d3]" />
-                <span className="text-xs font-bold text-[#0069d3] uppercase">Entradas</span>
+          {/* Cartão Atletas */}
+          <div className="bg-amber-100/90 p-6 rounded-2xl shadow-md border border-amber-300 flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-amber-300/60">
+                <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
+                  <Users className="h-5 w-5" />
+                </div>
+                <h4 className="font-bold text-gray-800 text-lg">Atletas</h4>
               </div>
-              <p className="text-lg sm:text-xl font-black text-gray-800">
-                <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
-                {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Ativos */}
+                <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-sm font-semibold text-gray-600">Ativos</span>
+                  </div>
+                  <span className="text-lg font-black text-gray-800">
+                    {athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo').length}
+                  </span>
+                </div>
+
+                {/* Inativo */}
+                <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <span className="text-sm font-semibold text-gray-600">Inativo</span>
+                  </div>
+                  <span className="text-lg font-black text-gray-800">
+                    {athletes.filter(a => a.status === 'Inativo').length}
+                  </span>
+                </div>
+
+                {/* Afastado */}
+                <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <span className="text-sm font-semibold text-gray-600">Afastado</span>
+                  </div>
+                  <span className="text-lg font-black text-gray-800">
+                    {athletes.filter(a => a.status === 'Afastado').length}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-red-100 hover:bg-red-200/90 p-4 rounded-xl border border-red-300 shadow-md transition-all duration-300">
-              <div className="flex items-center gap-2 mb-1.5">
-                <TrendingDown className="h-4 w-4 text-red-600" />
-                <span className="text-xs font-bold text-red-600 uppercase">Saídas</span>
-              </div>
-              <p className="text-lg sm:text-xl font-black text-gray-800">
-                <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
-                {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
+            <div className="mt-4 pt-3 border-t border-amber-300 text-right">
+              <span className="text-[10px] font-bold text-amber-800 uppercase">
+                Total: {athletes.length} cadastrados
+              </span>
             </div>
           </div>
         </div>
@@ -515,65 +571,18 @@ export default function Dashboard() {
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors" />
+                    {/* Apelido do atleta sobreposto na parte inferior */}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-6 pb-1 px-1.5 flex items-end justify-center pointer-events-none transition-opacity duration-300">
+                      <span className="text-[10px] font-extrabold text-white truncate max-w-full text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        {athlete.nickname || athlete.name.split(' ')[0]}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         )}
-
-        {/* Cartão Atletas */}
-        <div className="bg-amber-100/90 p-6 rounded-2xl shadow-md border border-amber-300 flex flex-col justify-between mb-8 transition-all duration-300">
-          <div>
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-amber-300/60">
-              <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
-                <Users className="h-5 w-5" />
-              </div>
-              <h4 className="font-bold text-gray-800 text-lg">Atletas</h4>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Ativos */}
-              <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-sm font-semibold text-gray-600">Ativos</span>
-                </div>
-                <span className="text-lg font-black text-gray-800">
-                  {athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo').length}
-                </span>
-              </div>
-
-              {/* Inativo */}
-              <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                  <span className="text-sm font-semibold text-gray-600">Inativo</span>
-                </div>
-                <span className="text-lg font-black text-gray-800">
-                  {athletes.filter(a => a.status === 'Inativo').length}
-                </span>
-              </div>
-
-              {/* Afastado */}
-              <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                  <span className="text-sm font-semibold text-gray-600">Afastado</span>
-                </div>
-                <span className="text-lg font-black text-gray-800">
-                  {athletes.filter(a => a.status === 'Afastado').length}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-amber-300 text-right">
-            <span className="text-[10px] font-bold text-amber-800 uppercase">
-              Total: {athletes.length} cadastrados
-            </span>
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Adimplentes */}
