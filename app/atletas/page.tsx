@@ -16,6 +16,7 @@ import {
 import { db } from '@/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
+import { normalizeGoogleDriveUrl } from '@/lib/utils';
 import { 
   ArrowLeft, 
   Search, 
@@ -68,12 +69,8 @@ export default function AthletesReportPage() {
     const unsubAthletes = onSnapshot(qAthletes, (snapshot) => {
       const data = snapshot.docs.map(doc => {
         const rawData: any = { id: doc.id, ...doc.data() };
-        if (rawData.photoUrl && rawData.photoUrl.includes('drive.google.com/file/d/')) {
-          const parts = rawData.photoUrl.split('/d/');
-          if (parts.length > 1) {
-            const fileId = parts[1].split('/')[0];
-            rawData.photoUrl = `https://drive.google.com/uc?id=${fileId}`;
-          }
+        if (rawData.photoUrl) {
+          rawData.photoUrl = normalizeGoogleDriveUrl(rawData.photoUrl);
         }
         return rawData;
       });

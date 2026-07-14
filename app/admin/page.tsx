@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import { normalizeGoogleDriveUrl } from '@/lib/utils';
 import { 
   collection, 
   addDoc, 
@@ -89,12 +90,8 @@ export default function AdminPage() {
     const unsubAthletes = onSnapshot(query(collection(db, 'athletes'), orderBy('name')), (snap) => {
       const data = snap.docs.map(doc => {
         const rawData: any = { id: doc.id, ...doc.data() };
-        if (rawData.photoUrl && rawData.photoUrl.includes('drive.google.com/file/d/')) {
-          const parts = rawData.photoUrl.split('/d/');
-          if (parts.length > 1) {
-            const fileId = parts[1].split('/')[0];
-            rawData.photoUrl = `https://drive.google.com/uc?id=${fileId}`;
-          }
+        if (rawData.photoUrl) {
+          rawData.photoUrl = normalizeGoogleDriveUrl(rawData.photoUrl);
         }
         return rawData;
       });

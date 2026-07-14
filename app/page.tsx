@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { collection, query, onSnapshot, orderBy, limit, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
+import { normalizeGoogleDriveUrl } from '@/lib/utils';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -26,6 +27,7 @@ import {
   Calendar,
   Check,
   X,
+  Menu,
   PieChart as PieChartIcon
 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, addWeeks, previousSunday } from 'date-fns';
@@ -50,10 +52,31 @@ export default function Dashboard() {
   const [scrolled, setScrolled] = useState(false);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [statementSearchTerm, setStatementSearchTerm] = useState('');
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; name: string } | null>(null);
   const [attendance, setAttendance] = useState<Record<string, string[]>>({});
   const [baseDate] = useState<Date>(() => previousSunday(new Date()));
+  const [selectedAthletePhoto, setSelectedAthletePhoto] = useState<{ src: string; nickname: string; name: string } | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const photosList = athletes.filter(a => a.photoUrl && a.photoUrl.trim() !== '');
+    if (photosList.length === 0) return;
+    const interval = setInterval(() => {
+      if (carouselRef.current) {
+        const container = carouselRef.current;
+        const itemWidth = 112; // 96px (w-24) + 16px (gap-4)
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        if (container.scrollLeft >= maxScroll - 5) {
+          container.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          container.scrollBy({ left: itemWidth, behavior: 'smooth' });
+        }
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [athletes]);
 
   // Last 4 Sundays
   const lastFourSundays = Array.from({ length: 4 }, (_, i) => addWeeks(baseDate, i - 3));
@@ -76,12 +99,8 @@ export default function Dashboard() {
     const unsubscribeAthletes = onSnapshot(qAthletes, (snapshot) => {
       const data = snapshot.docs.map(doc => {
         const rawData: any = { id: doc.id, ...doc.data() };
-        if (rawData.photoUrl && rawData.photoUrl.includes('drive.google.com/file/d/')) {
-          const parts = rawData.photoUrl.split('/d/');
-          if (parts.length > 1) {
-            const fileId = parts[1].split('/')[0];
-            rawData.photoUrl = `https://drive.google.com/uc?id=${fileId}`;
-          }
+        if (rawData.photoUrl) {
+          rawData.photoUrl = normalizeGoogleDriveUrl(rawData.photoUrl);
         }
         return rawData;
       });
@@ -233,73 +252,161 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       {/* Navbar */}
-      <nav className={`bg-white border-b border-gray-300 sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'py-1 sm:py-2' : ''}`}>
+      <nav className={`bg-white border-b border-gray-300 sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'py-1 lg:py-2' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`flex flex-col sm:flex-row justify-between items-center transition-all duration-300 ${scrolled ? 'h-auto sm:h-20' : 'h-auto sm:h-28 py-3 sm:py-0'}`}>
-            <div className={`flex flex-col items-center sm:flex-row sm:items-center transition-all duration-300 ${scrolled ? 'pt-0' : 'pt-3 sm:pt-0'}`}>
-              <Image 
-                src="https://drive.google.com/uc?id=1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
-                alt="Logo Baba das Seis" 
-                width={800} 
-                height={320} 
-                className={`w-auto transition-all duration-300 sm:mr-4 ${scrolled ? 'h-10 sm:h-16' : 'h-20 sm:h-24'}`}
-                priority
-                referrerPolicy="no-referrer"
-              />
-              <span className={`text-[#002874] font-black text-lg sm:text-2xl mt-1.5 sm:mt-0 transition-all duration-300 overflow-hidden sm:border-l sm:border-gray-300 sm:pl-4 ${scrolled ? 'max-sm:h-0 max-sm:opacity-0 max-sm:mt-0' : 'h-auto opacity-100'}`}>Gestão Financeira</span>
+          <div className={`flex flex-col lg:flex-row lg:justify-between lg:items-center transition-all duration-300 ${scrolled ? 'py-1 lg:py-0 h-auto lg:h-20' : 'py-3 lg:py-0 h-auto lg:h-28'}`}>
+            <div className="flex w-full lg:w-auto justify-between items-center">
+              <div className="flex items-center">
+                <Image 
+                  src="https://lh3.googleusercontent.com/d/1sDOSLfcrEqrfhcVEMSDrQGLAnnD0p-b6" 
+                  alt="Logo Baba das Seis" 
+                  width={800} 
+                  height={320} 
+                  className={`w-auto transition-all duration-300 mr-2 lg:mr-4 ${scrolled ? 'h-10 lg:h-16' : 'h-14 lg:h-24'}`}
+                  priority
+                  referrerPolicy="no-referrer"
+                />
+                <span className="text-[#002874] font-black text-sm lg:text-2xl border-l border-gray-300 pl-2 lg:pl-4 transition-all duration-300">Gestão Financeira</span>
+              </div>
+              
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-gray-500 hover:text-[#002874] hover:bg-gray-100 rounded-xl transition-all duration-150 cursor-pointer lg:hidden border-none focus:outline-none"
+                aria-label="Toggle Menu"
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
             </div>
-            <div className={`flex items-center space-x-2 sm:space-x-4 transition-all duration-300 ${scrolled ? 'mt-2 sm:mt-0' : 'mt-3 sm:mt-0'}`}>
+
+            {/* Desktop Menu */}
+            <div className="hidden lg:flex items-center space-x-4 transition-all duration-300">
               <a 
                 href="https://babadasseis.netlify.app/" 
-                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
+                className="text-xs lg:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
               >
                 <Home className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
                 <span>Início</span>
               </a>
               <button 
                 onClick={() => setIsRulesModalOpen(true)}
-                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all border-none bg-transparent outline-none"
+                className="text-xs lg:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all border-none bg-transparent outline-none"
               >
                 <FileText className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
                 <span>Regras</span>
               </button>
               <Link 
                 href="/presenca" 
-                className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
+                className="text-xs lg:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
               >
                 <Calendar className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
                 <span>Presença</span>
               </Link>
               {user && isAdmin ? (
                 <>
-                  <Link href="/admin" className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all">
+                  <Link href="/admin" className="text-xs lg:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all">
                     <Settings className="h-4 w-4 mr-1" />
-                    <span className="hidden xs:inline">Painel</span>
+                    <span>Painel</span>
                   </Link>
                   <button 
                     onClick={() => logout()}
-                    className="text-xs sm:text-sm font-semibold text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
+                    className="text-xs lg:text-sm font-semibold text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
                   >
                     <LogOut className="h-4 w-4 mr-1" />
-                    <span className="hidden xs:inline">Sair</span>
+                    <span>Sair</span>
                   </button>
                 </>
               ) : user ? (
                 <button 
                   onClick={() => logout()}
-                  className="text-xs sm:text-sm font-semibold text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
+                  className="text-xs lg:text-sm font-semibold text-red-600 hover:text-red-700 flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
-                  <span className="hidden xs:inline">Sair</span>
+                  <span>Sair</span>
                 </button>
               ) : (
-                <Link href="/login" className="text-xs sm:text-sm font-bold text-[#002874] hover:text-[#0069d3] flex items-center cursor-pointer transition-all">
+                <Link href="/login" className="text-xs lg:text-sm font-bold text-[#002874] hover:text-[#0069d3] flex items-center cursor-pointer transition-all">
                   <User className="h-4 w-4 mr-1" />
                   <span>Entrar</span>
                 </Link>
               )}
             </div>
           </div>
+
+          {/* Mobile Menu Panel */}
+          {isMobileMenuOpen && (
+            <div className="lg:hidden border-t border-gray-100 py-3 mt-1 space-y-1 animate-in fade-in slide-in-from-top-5 duration-200">
+              <a 
+                href="https://babadasseis.netlify.app/" 
+                className="flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-[#0069d3] hover:bg-gray-50 transition-all"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Home className="h-4 w-4 mr-2 text-gray-400" />
+                Início
+              </a>
+              <button 
+                onClick={() => {
+                  setIsRulesModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-[#0069d3] hover:bg-gray-50 transition-all border-none bg-transparent outline-none cursor-pointer"
+              >
+                <FileText className="h-4 w-4 mr-2 text-gray-400" />
+                Regras
+              </button>
+              <Link 
+                href="/presenca" 
+                className="flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-[#0069d3] hover:bg-gray-50 transition-all"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                Presença
+              </Link>
+              
+              {user && isAdmin ? (
+                <>
+                  <Link 
+                    href="/admin" 
+                    className="flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-[#0069d3] hover:bg-gray-50 transition-all"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Settings className="h-4 w-4 mr-2 text-gray-400" />
+                    Painel
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 transition-all border-none bg-transparent outline-none cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </button>
+                </>
+              ) : user ? (
+                <button 
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 transition-all border-none bg-transparent outline-none cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </button>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="flex items-center px-3 py-2.5 rounded-xl text-sm font-bold text-[#002874] hover:text-[#0069d3] hover:bg-[#002874]/5 transition-all"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Entrar
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </nav>
 
@@ -322,109 +429,149 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          {/* Cartão Financeiro Compacto e Unificado */}
-          <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-gray-400">Resumo Financeiro</span>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${balance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${balance >= 0 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`} />
-                  {balance >= 0 ? 'Superávit' : 'Déficit'}
-                </span>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-b border-gray-100 pb-5 mb-5">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Saldo Atual</p>
-                  <h3 className={`text-3xl sm:text-4xl font-black tracking-tight mt-1 ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    <span className="text-lg sm:text-xl font-bold mr-1">R$</span>
-                    {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </h3>
-                </div>
-                <div className="mt-3 sm:mt-0 flex items-center gap-2 text-xs text-gray-400">
-                  <DollarSign className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
-                  <span>Atualizado em tempo real</span>
-                </div>
-              </div>
+        {/* Cartão Financeiro Compacto e Unificado */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between mb-8">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-black uppercase tracking-wider text-gray-400">Resumo Financeiro</span>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${balance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${balance >= 0 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`} />
+                {balance >= 0 ? 'Superávit' : 'Déficit'}
+              </span>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#0069d3]/10 hover:bg-[#0069d3]/15 p-4 rounded-xl border border-[#0069d3]/35 shadow-md transition-all duration-300">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <TrendingUp className="h-4 w-4 text-[#0069d3]" />
-                  <span className="text-xs font-bold text-[#0069d3] uppercase">Entradas</span>
-                </div>
-                <p className="text-lg sm:text-xl font-black text-gray-800">
-                  <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
-                  {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
+            
+            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-b border-gray-100 pb-5 mb-5">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Saldo Atual</p>
+                <h3 className={`text-3xl sm:text-4xl font-black tracking-tight mt-1 ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span className="text-lg sm:text-xl font-bold mr-1">R$</span>
+                  {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </h3>
               </div>
-
-              <div className="bg-red-100 hover:bg-red-200/90 p-4 rounded-xl border border-red-300 shadow-md transition-all duration-300">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <TrendingDown className="h-4 w-4 text-red-600" />
-                  <span className="text-xs font-bold text-red-600 uppercase">Saídas</span>
-                </div>
-                <p className="text-lg sm:text-xl font-black text-gray-800">
-                  <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
-                  {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
+              <div className="mt-3 sm:mt-0 flex items-center gap-2 text-xs text-gray-400">
+                <DollarSign className={`h-5 w-5 ${balance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
+                <span>Atualizado em tempo real</span>
               </div>
             </div>
           </div>
 
-          {/* Cartão Atletas */}
-          <div className="bg-amber-100/90 p-6 rounded-2xl shadow-md border border-amber-300 flex flex-col justify-between transition-all duration-300">
-            <div>
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-amber-300/60">
-                <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
-                  <Users className="h-5 w-5" />
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg">Atletas</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#0069d3]/10 hover:bg-[#0069d3]/15 p-4 rounded-xl border border-[#0069d3]/35 shadow-md transition-all duration-300">
+              <div className="flex items-center gap-2 mb-1.5">
+                <TrendingUp className="h-4 w-4 text-[#0069d3]" />
+                <span className="text-xs font-bold text-[#0069d3] uppercase">Entradas</span>
               </div>
-
-              <div className="space-y-3">
-                {/* Ativos */}
-                <div className="flex items-center justify-between p-2.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                    <span className="text-sm font-semibold text-gray-600">Ativos</span>
-                  </div>
-                  <span className="text-lg font-black text-gray-800">
-                    {athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo').length}
-                  </span>
-                </div>
-
-                {/* Inativo */}
-                <div className="flex items-center justify-between p-2.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                    <span className="text-sm font-semibold text-gray-600">Inativo</span>
-                  </div>
-                  <span className="text-lg font-black text-gray-800">
-                    {athletes.filter(a => a.status === 'Inativo').length}
-                  </span>
-                </div>
-
-                {/* Afastado */}
-                <div className="flex items-center justify-between p-2.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                    <span className="text-sm font-semibold text-gray-600">Afastado</span>
-                  </div>
-                  <span className="text-lg font-black text-gray-800">
-                    {athletes.filter(a => a.status === 'Afastado').length}
-                  </span>
-                </div>
-              </div>
+              <p className="text-lg sm:text-xl font-black text-gray-800">
+                <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
+                {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-amber-300 text-right">
-              <span className="text-[10px] font-bold text-amber-800 uppercase">
-                Total: {athletes.length} cadastrados
-              </span>
+            <div className="bg-red-100 hover:bg-red-200/90 p-4 rounded-xl border border-red-300 shadow-md transition-all duration-300">
+              <div className="flex items-center gap-2 mb-1.5">
+                <TrendingDown className="h-4 w-4 text-red-600" />
+                <span className="text-xs font-bold text-red-600 uppercase">Saídas</span>
+              </div>
+              <p className="text-lg sm:text-xl font-black text-gray-800">
+                <span className="text-xs font-bold mr-0.5 text-gray-500">R$</span>
+                {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
+          </div>
+        </div>
+
+        {/* Athlete Photos Carousel Box (without title as requested) */}
+        {athletes.filter(a => a.photoUrl && a.photoUrl.trim() !== '').length > 0 && (
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm mb-8 overflow-hidden relative">
+            <div className="relative w-full overflow-hidden">
+              {/* Fade overlays for premium visual scroll effect */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10" />
+              
+              <div 
+                ref={carouselRef}
+                className="flex gap-4 overflow-x-auto py-1 no-scrollbar scroll-smooth"
+                style={{ scrollbarWidth: 'none' }}
+              >
+                {[...athletes]
+                  .filter(a => a.photoUrl && a.photoUrl.trim() !== '')
+                  .sort((a, b) => {
+                    const nameA = (a.nickname || a.name || '').trim().toLowerCase();
+                    const nameB = (b.nickname || b.name || '').trim().toLowerCase();
+                    return nameA.localeCompare(nameB, 'pt-BR');
+                  })
+                  .map((athlete: any) => (
+                  <div 
+                    key={athlete.id}
+                    onClick={() => setSelectedAthletePhoto({ src: athlete.photoUrl, nickname: athlete.nickname || athlete.name, name: athlete.name })}
+                    className="flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden relative cursor-pointer border-2 border-gray-100 hover:border-[#0069d3] hover:scale-105 active:scale-95 transition-all shadow-md group"
+                    title={athlete.nickname || athlete.name}
+                  >
+                    <Image 
+                      src={athlete.photoUrl} 
+                      alt={athlete.nickname || athlete.name}
+                      fill
+                      className="object-cover object-top group-hover:scale-110 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cartão Atletas */}
+        <div className="bg-amber-100/90 p-6 rounded-2xl shadow-md border border-amber-300 flex flex-col justify-between mb-8 transition-all duration-300">
+          <div>
+            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-amber-300/60">
+              <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
+                <Users className="h-5 w-5" />
+              </div>
+              <h4 className="font-bold text-gray-800 text-lg">Atletas</h4>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Ativos */}
+              <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-sm font-semibold text-gray-600">Ativos</span>
+                </div>
+                <span className="text-lg font-black text-gray-800">
+                  {athletes.filter(a => a.status !== 'Afastado' && a.status !== 'Inativo').length}
+                </span>
+              </div>
+
+              {/* Inativo */}
+              <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                  <span className="text-sm font-semibold text-gray-600">Inativo</span>
+                </div>
+                <span className="text-lg font-black text-gray-800">
+                  {athletes.filter(a => a.status === 'Inativo').length}
+                </span>
+              </div>
+
+              {/* Afastado */}
+              <div className="flex items-center justify-between p-3.5 bg-white rounded-xl shadow-sm border border-amber-300/50">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                  <span className="text-sm font-semibold text-gray-600">Afastado</span>
+                </div>
+                <span className="text-lg font-black text-gray-800">
+                  {athletes.filter(a => a.status === 'Afastado').length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-amber-300 text-right">
+            <span className="text-[10px] font-bold text-amber-800 uppercase">
+              Total: {athletes.length} cadastrados
+            </span>
           </div>
         </div>
 
@@ -985,6 +1132,45 @@ export default function Dashboard() {
             <div className="pt-4 pb-2 px-3 flex flex-col items-center text-center">
               <h4 className="text-xl font-black text-gray-900">{lightboxPhoto.name}</h4>
               <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">Atleta Adimplente</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Selected Athlete Photo Modal */}
+      {selectedAthletePhoto && (
+        <div 
+          onClick={() => setSelectedAthletePhoto(null)} 
+          className="fixed inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center z-[110] p-4 cursor-zoom-out animate-in fade-in duration-200"
+        >
+          <div className="absolute top-4 right-4 z-[120]">
+            <button 
+              onClick={() => setSelectedAthletePhoto(null)} 
+              className="p-3 bg-white/10 hover:bg-white/20 active:scale-90 text-white rounded-full transition-all duration-150 cursor-pointer shadow-lg backdrop-blur-sm border border-white/10"
+              title="Fechar"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200 p-4 flex flex-col cursor-default animate-in zoom-in-95 duration-200"
+          >
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gray-950 border border-gray-100 shadow-inner">
+              <Image 
+                src={selectedAthletePhoto.src} 
+                alt={selectedAthletePhoto.nickname || selectedAthletePhoto.name}
+                fill
+                className="object-cover object-top"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="pt-4 pb-2 px-3 flex flex-col items-center text-center">
+              <h4 className="text-2xl font-black text-[#002874]">{selectedAthletePhoto.nickname || selectedAthletePhoto.name}</h4>
+              {selectedAthletePhoto.nickname && selectedAthletePhoto.nickname !== selectedAthletePhoto.name && (
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">{selectedAthletePhoto.name}</p>
+              )}
             </div>
           </div>
         </div>
