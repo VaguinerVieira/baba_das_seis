@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { collection, query, onSnapshot, orderBy, limit, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
@@ -28,7 +28,8 @@ import {
   Check,
   X,
   Menu,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  UserPlus
 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, addWeeks, previousSunday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -44,9 +45,59 @@ import {
 
 const monthAbbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
+const formatEntryDate = (entryDate?: string) => {
+  if (!entryDate) return 'Novo';
+  const parts = entryDate.split('-');
+  if (parts.length >= 2) {
+    const year = parts[0];
+    const monthNum = parseInt(parts[1], 10);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const monthStr = monthAbbr[monthNum - 1];
+      return `Entrou em ${monthStr}/${year}`;
+    }
+  }
+  return 'Novo';
+};
+
 export default function Dashboard() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
+
+  const enrichedTransactions = useMemo(() => {
+    const sortedAsc = [...transactions].sort((a, b) => {
+      const dateA = a.date || '';
+      const dateB = b.date || '';
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+      const getTimestampValue = (t: any) => {
+        if (!t.createdAt) return 0;
+        if (typeof t.createdAt.toMillis === 'function') return t.createdAt.toMillis();
+        if (t.createdAt.seconds !== undefined) return t.createdAt.seconds * 1000 + (t.createdAt.nanoseconds || 0) / 1000000;
+        if (t.createdAt instanceof Date) return t.createdAt.getTime();
+        if (typeof t.createdAt === 'number') return t.createdAt;
+        if (typeof t.createdAt === 'string') return new Date(t.createdAt).getTime();
+        return 0;
+      };
+      return getTimestampValue(a) - getTimestampValue(b);
+    });
+
+    let running = 0;
+    const balances: Record<string, number> = {};
+    sortedAsc.forEach((t) => {
+      if (t.type === 'income') {
+        running += t.amount || 0;
+      } else {
+        running -= t.amount || 0;
+      }
+      balances[t.id] = running;
+    });
+
+    return transactions.map(t => ({
+      ...t,
+      runningBalance: balances[t.id] || 0
+    }));
+  }, [transactions]);
   const [athletes, setAthletes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
@@ -170,6 +221,23 @@ export default function Dashboard() {
   const criticalAthletes = athletes
     .filter(athlete => athlete.status !== 'Afastado' && athlete.status !== 'Inativo')
     .filter(athlete => !athlete.isExempt && !athlete.isBoardMember)
+    .filter(athlete => !athlete.isNew)
+    .map(athlete => {
+      const pendingMonths = [];
+      for (let i = 1; i <= paymentDueLimit; i++) {
+        if (!athlete.paidMonths?.includes(i)) {
+          pendingMonths.push(monthAbbr[i - 1]);
+        }
+      }
+      return { ...athlete, pendingMonths };
+    })
+    .filter(a => a.pendingMonths.length >= 1)
+    .sort((a, b) => b.pendingMonths.length - a.pendingMonths.length);
+
+  const newAthletes = athletes
+    .filter(athlete => athlete.status !== 'Afastado' && athlete.status !== 'Inativo')
+    .filter(athlete => !athlete.isExempt && !athlete.isBoardMember)
+    .filter(athlete => athlete.isNew)
     .map(athlete => {
       const pendingMonths = [];
       for (let i = 1; i <= paymentDueLimit; i++) {
@@ -560,7 +628,7 @@ export default function Dashboard() {
                   <div 
                     key={athlete.id}
                     onClick={() => setSelectedAthletePhoto({ src: athlete.photoUrl, nickname: athlete.nickname || athlete.name, name: athlete.name })}
-                    className="flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden relative cursor-pointer border-2 border-gray-100 hover:border-[#0069d3] hover:scale-105 active:scale-95 transition-all shadow-md group"
+                    className="flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden relative cursor-pointer border-2 border-amber-200 bg-amber-50 hover:border-amber-500 hover:scale-105 active:scale-95 transition-all shadow-md group"
                     title={athlete.nickname || athlete.name}
                   >
                     <Image 
@@ -570,7 +638,7 @@ export default function Dashboard() {
                       className="object-cover object-top group-hover:scale-110 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors" />
+                    <div className="absolute inset-0 bg-amber-500/10 group-hover:bg-amber-500/0 transition-colors" />
                     {/* Apelido do atleta sobreposto na parte inferior */}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-6 pb-1 px-1.5 flex items-end justify-center pointer-events-none transition-opacity duration-300">
                       <span className="text-[10px] font-extrabold text-white truncate max-w-full text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
@@ -584,7 +652,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Adimplentes */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[480px]">
             <div className="flex items-center justify-between mb-6">
@@ -660,7 +728,7 @@ export default function Dashboard() {
               </span>
             </div>
             <p className="text-[11px] text-gray-400 mb-6 -mt-4 bg-red-50/30 p-2 rounded-lg border border-red-50">
-              Atletas irregulares com qualquer pendência até o {paymentDueLimit === currentMonth ? 'mês atual' : 'mês anterior  (limite dia 09)'}.
+              Atletas irregulares com qualquer pendência até o {paymentDueLimit === currentMonth ? 'mês atual' : 'mês anterior (limite dia 09)'}.
             </p>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {criticalAthletes.length > 0 ? (
@@ -669,11 +737,6 @@ export default function Dashboard() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
-                        {athlete.isNew && (
-                          <span className="text-[9px] font-black text-white bg-[#0069d3] px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
-                            Novo
-                          </span>
-                        )}
                       </div>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {athlete.pendingMonths.map((month: string) => (
@@ -685,13 +748,59 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
-                      <span className="text-sm font-bold text-red-600">{athlete.pendingMonths.length} meses</span>
+                      <span className="text-sm font-bold text-red-600">{athlete.pendingMonths.length}</span>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
                   Nenhum atleta com pendências críticas.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Novatos */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[480px]">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <UserPlus className="h-5 w-5 mr-2 text-[#0069d3]" /> Novatos
+              </h3>
+              <span className="text-xs font-medium text-[#0069d3] bg-blue-50 px-2 py-1 rounded-full">
+                {newAthletes.length} Novos
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-400 mb-6 -mt-4 bg-blue-50/30 p-2 rounded-lg border border-blue-50">
+              Atletas novatos com qualquer pendência até o {paymentDueLimit === currentMonth ? 'mês atual' : 'mês anterior (limite dia 09)'}.
+            </p>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+              {newAthletes.length > 0 ? (
+                newAthletes.map((athlete: any) => (
+                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-blue-50/5 rounded-xl border border-blue-200 hover:border-blue-300 transition-colors">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                          {formatEntryDate(athlete.entryDate)}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {athlete.pendingMonths.map((month: string) => (
+                          <span key={month} className="text-[10px] font-bold text-[#0069d3] bg-blue-50 px-1.5 py-0.5 rounded uppercase">
+                            {month}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
+                      <span className="text-sm font-bold text-[#0069d3]">{athlete.pendingMonths.length}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
+                  Nenhum novato com pendências.
                 </div>
               )}
             </div>
@@ -765,43 +874,56 @@ export default function Dashboard() {
                 <Cake className="h-5 w-5 mr-2 text-[#ffba00]" /> Niver da Semana
               </h3>
             </div>
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
               {weeklyBirthdays.length > 0 ? (
-                weeklyBirthdays.map((athlete: any) => (
-                  <div key={athlete.id} className="flex items-center justify-between p-3 bg-[#002874]/5 rounded-xl border border-[#002874]/15 hover:bg-[#002874]/10 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-white shadow-sm bg-[#002874]/10 flex-shrink-0">
+                <div className="grid grid-cols-2 gap-4 pb-2">
+                  {weeklyBirthdays.map((athlete: any) => (
+                    <div key={athlete.id} className="flex flex-col items-center p-4 bg-gradient-to-br from-amber-100 via-rose-50/70 to-orange-100/40 rounded-xl border border-amber-300/80 hover:bg-amber-50/40 hover:border-amber-400 hover:shadow-md hover:scale-[1.02] transition-all text-center relative duration-300">
+                      {/* Festive balloons/confetti icon */}
+                      <div className="absolute top-2.5 right-2.5 text-sm select-none">🎉</div>
+                      <div className="absolute top-2.5 left-2.5 text-sm select-none">🎈</div>
+
+                      {/* Photo in Top Center */}
+                      <div 
+                        onClick={() => {
+                          if (athlete.photoUrl) {
+                            setLightboxPhoto({ src: athlete.photoUrl, name: athlete.nickname || athlete.name });
+                          }
+                        }}
+                        className={`h-16 w-16 rounded-xl border border-gray-150 overflow-hidden bg-white shadow-sm flex-shrink-0 mb-3 flex items-center justify-center ${athlete.photoUrl ? 'cursor-pointer hover:scale-[1.08] hover:shadow-md hover:border-[#0069d3]/40 active:scale-95 transition-all duration-200' : ''}`}
+                        title={athlete.photoUrl ? "Visualizar foto" : undefined}
+                      >
                         {athlete.photoUrl ? (
                           <div className="relative h-full w-full">
                             <Image 
                               src={athlete.photoUrl} 
                               alt={athlete.nickname || athlete.name}
                               fill
-                              className="object-cover"
+                              className="object-cover object-top"
                               referrerPolicy="no-referrer"
                             />
                           </div>
                         ) : (
-                          <div className="h-full w-full flex items-center justify-center text-[#002874] font-bold text-lg">
+                          <div className="h-full w-full flex items-center justify-center bg-blue-50 text-[#002874] font-bold text-xl">
                             {athlete.nickname?.charAt(0) || athlete.name.charAt(0)}
                           </div>
                         )}
                       </div>
-                      <div>
-                        <p className="font-bold text-gray-800 leading-tight">{athlete.nickname || athlete.name}</p>
-                        <p className="text-[10px] text-gray-500 uppercase font-medium line-clamp-1">{athlete.name}</p>
+
+                      <p className="font-black text-amber-950 leading-tight text-sm sm:text-base mb-3 truncate max-w-full drop-shadow-[0_0.5px_0.5px_rgba(255,255,255,0.8)]">
+                        {athlete.nickname || athlete.name.split(' ')[0]}
+                      </p>
+
+                      {/* Birthday date at the bottom - Enlarged */}
+                      <div className="mt-auto bg-amber-500 text-white px-3 py-1 rounded-full border border-amber-400 text-xs sm:text-sm font-black shadow-sm flex items-center gap-1">
+                        <Cake className="h-3.5 w-3.5" />
+                        <span>{String(athlete.birthdayDay).padStart(2, '0')}/{String(athlete.birthdayMonth).padStart(2, '0')}</span>
                       </div>
                     </div>
-                    <div className="bg-white px-2 py-1 rounded-lg border border-[#002874]/20 shadow-sm flex flex-col items-center min-w-[50px] flex-shrink-0 ml-2">
-                       <span className="text-[10px] font-bold text-[#0069d3] uppercase leading-none mb-1">DATA</span>
-                       <span className="text-sm font-black text-[#002874]">
-                         {String(athlete.birthdayDay).padStart(2, '0')}/{String(athlete.birthdayMonth).padStart(2, '0')}
-                       </span>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic">
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic h-full">
                   <Calendar className="h-8 w-8 mb-2 opacity-20" />
                   Nenhum aniversariante nesta semana.
                 </div>
@@ -828,10 +950,11 @@ export default function Dashboard() {
                   <th className="px-6 py-4 font-medium">Data</th>
                   <th className="px-6 py-4 font-medium">Descrição</th>
                   <th className="px-6 py-4 font-medium text-right">Valor</th>
+                  <th className="px-6 py-4 font-medium text-right">Saldo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {transactions.slice(0, 5).map((t) => (
+                {enrichedTransactions.slice(0, 5).map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
                     <td className="px-6 py-4 text-sm text-gray-800">
@@ -850,11 +973,16 @@ export default function Dashboard() {
                     }`}>
                       {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
+                    <td className={`px-6 py-4 text-sm font-bold text-right ${
+                      t.runningBalance >= 0 ? 'text-emerald-600' : 'text-red-600'
+                    }`}>
+                      {t.runningBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </td>
                   </tr>
                 ))}
                 {transactions.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-gray-500">Nenhuma transação encontrada.</td>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">Nenhuma transação encontrada.</td>
                   </tr>
                 )}
               </tbody>
@@ -897,10 +1025,11 @@ export default function Dashboard() {
                     <th className="px-2 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-16">CP</th>
                     <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Descrição</th>
                     <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Valor</th>
+                    <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Saldo</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-300">
-                  {transactions
+                  {enrichedTransactions
                     .filter(t => {
                       const term = statementSearchTerm.toLowerCase();
                       const desc = (t.description || '').toLowerCase();
@@ -963,6 +1092,11 @@ export default function Dashboard() {
                           t.type === 'income' ? 'text-[#002874]' : 'text-red-600'
                         }`}>
                           {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${
+                          t.runningBalance >= 0 ? 'text-emerald-600' : 'text-red-600'
+                        }`}>
+                          {t.runningBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}

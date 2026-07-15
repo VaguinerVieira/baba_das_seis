@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
@@ -66,6 +66,42 @@ export default function AdminPage() {
   // Data states
   const [athletes, setAthletes] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+
+  const enrichedTransactions = useMemo(() => {
+    const sortedAsc = [...transactions].sort((a, b) => {
+      const dateA = a.date || '';
+      const dateB = b.date || '';
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+      const getTimestampValue = (t: any) => {
+        if (!t.createdAt) return 0;
+        if (typeof t.createdAt.toMillis === 'function') return t.createdAt.toMillis();
+        if (t.createdAt.seconds !== undefined) return t.createdAt.seconds * 1000 + (t.createdAt.nanoseconds || 0) / 1000000;
+        if (t.createdAt instanceof Date) return t.createdAt.getTime();
+        if (typeof t.createdAt === 'number') return t.createdAt;
+        if (typeof t.createdAt === 'string') return new Date(t.createdAt).getTime();
+        return 0;
+      };
+      return getTimestampValue(a) - getTimestampValue(b);
+    });
+
+    let running = 0;
+    const balances: Record<string, number> = {};
+    sortedAsc.forEach((t) => {
+      if (t.type === 'income') {
+        running += t.amount || 0;
+      } else {
+        running -= t.amount || 0;
+      }
+      balances[t.id] = running;
+    });
+
+    return transactions.map(t => ({
+      ...t,
+      runningBalance: balances[t.id] || 0
+    }));
+  }, [transactions]);
   const [categories, setCategories] = useState<any[]>([]);
   const [athleteSearchTerm, setAthleteSearchTerm] = useState('');
   
@@ -181,7 +217,7 @@ export default function AdminPage() {
     } else {
       // Default values
       if (activeTab === 'athletes') {
-        setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', whatsapp: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, isExempt: false, status: 'Ativo' });
+        setFormData({ name: '', nickname: '', number: '', birthdayDay: 1, birthdayMonth: 1, photoUrl: '', whatsapp: '', uniformSize: 'M', paidMonths: [], isBoardMember: false, isExempt: false, status: 'Ativo', entryDate: '' });
       } else if (activeTab === 'transactions') {
         setFormData({ type: 'income', category: 'mensalidade', amount: 0, date: format(new Date(), 'yyyy-MM-dd'), description: '', isMonthlyFee: false, athleteId: '', referenceMonth: '', externalLink: '' });
       } else if (activeTab === 'categories') {
@@ -421,11 +457,12 @@ export default function AdminPage() {
                       <th className="px-2 py-4 font-medium text-center w-16">CP</th>
                       <th className="px-6 py-4 font-medium">Descrição</th>
                       <th className="px-6 py-4 font-medium text-right">Valor</th>
+                      <th className="px-6 py-4 font-medium text-right">Saldo</th>
                       <th className="px-6 py-4 font-medium text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {transactions.map(t => (
+                    {enrichedTransactions.map(t => (
                       <tr key={t.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
                         <td className="px-2 py-4 text-center">
@@ -466,6 +503,9 @@ export default function AdminPage() {
                         </td>
                         <td className={`px-6 py-4 text-sm font-bold text-right ${t.type === 'income' ? 'text-cyan-600' : 'text-red-600'}`}>
                           {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className={`px-6 py-4 text-sm font-bold text-right ${t.runningBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {t.runningBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
                           <button onClick={() => openModal(t)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
@@ -520,6 +560,26 @@ export default function AdminPage() {
             <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto flex-1">
               {activeTab === 'athletes' && (
                 <>
+                  {/* Visualização da Foto no Topo Centro */}
+                  <div className="flex flex-col items-center justify-center py-2">
+                    <div className="relative w-28 h-28 rounded-full border-4 border-cyan-500/20 overflow-hidden bg-gray-100 flex items-center justify-center shadow-md">
+                      {formData.photoUrl ? (
+                        <Image 
+                          src={formData.photoUrl} 
+                          alt={formData.nickname || formData.name || "Foto do Atleta"}
+                          fill
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <Users className="h-12 w-12 text-gray-300" />
+                      )}
+                    </div>
+                    <span className="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-wider">
+                      {formData.nickname || "Foto do Atleta"}
+                    </span>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nome Completo</label>
                     <input 
@@ -600,14 +660,24 @@ export default function AdminPage() {
                       </select>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">URL da Foto</label>
-                    <input 
-                      type="url" value={formData.photoUrl || ''} 
-                      onChange={e => setFormData({...formData, photoUrl: e.target.value})}
-                      placeholder="https://exemplo.com/foto.jpg"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">URL da Foto</label>
+                      <input 
+                        type="url" value={formData.photoUrl || ''} 
+                        onChange={e => setFormData({...formData, photoUrl: e.target.value})}
+                        placeholder="https://exemplo.com/foto.jpg"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Desde (Data de Entrada)</label>
+                      <input 
+                        type="date" value={formData.entryDate || ''} 
+                        onChange={e => setFormData({...formData, entryDate: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">WhatsApp</label>
