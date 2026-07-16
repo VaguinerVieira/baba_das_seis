@@ -638,10 +638,9 @@ export default function Dashboard() {
                       className="object-cover object-top group-hover:scale-110 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-amber-500/10 group-hover:bg-amber-500/0 transition-colors" />
-                    {/* Apelido do atleta sobreposto na parte inferior */}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-6 pb-1 px-1.5 flex items-end justify-center pointer-events-none transition-opacity duration-300">
-                      <span className="text-[10px] font-extrabold text-white truncate max-w-full text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    {/* Badge destacado no rodapé (substituindo o degradê por um efeito que ressalta o nome) */}
+                    <div className="absolute bottom-1.5 inset-x-1 flex justify-center pointer-events-none">
+                      <span className="text-[9px] font-black text-[#002874] bg-[#ffba00] px-2 py-0.5 rounded-md shadow-md truncate max-w-full uppercase tracking-wider border border-amber-400">
                         {athlete.nickname || athlete.name.split(' ')[0]}
                       </span>
                     </div>
@@ -780,7 +779,7 @@ export default function Dashboard() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-800">{athlete.nickname || athlete.name}</span>
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                        <span className="text-[10px] font-bold text-[#0069d3] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                           {formatEntryDate(athlete.entryDate)}
                         </span>
                       </div>
@@ -878,7 +877,7 @@ export default function Dashboard() {
               {weeklyBirthdays.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 pb-2">
                   {weeklyBirthdays.map((athlete: any) => (
-                    <div key={athlete.id} className="flex flex-col items-center p-4 bg-gradient-to-br from-amber-100 via-rose-50/70 to-orange-100/40 rounded-xl border border-amber-300/80 hover:bg-amber-50/40 hover:border-amber-400 hover:shadow-md hover:scale-[1.02] transition-all text-center relative duration-300">
+                    <div key={athlete.id} className="flex flex-col items-center p-4 bg-gradient-to-br from-amber-100 via-rose-50/70 to-orange-100/40 rounded-xl border border-amber-300/80 text-center relative">
                       {/* Festive balloons/confetti icon */}
                       <div className="absolute top-2.5 right-2.5 text-sm select-none">🎉</div>
                       <div className="absolute top-2.5 left-2.5 text-sm select-none">🎈</div>
@@ -890,7 +889,7 @@ export default function Dashboard() {
                             setLightboxPhoto({ src: athlete.photoUrl, name: athlete.nickname || athlete.name });
                           }
                         }}
-                        className={`h-16 w-16 rounded-xl border border-gray-150 overflow-hidden bg-white shadow-sm flex-shrink-0 mb-3 flex items-center justify-center ${athlete.photoUrl ? 'cursor-pointer hover:scale-[1.08] hover:shadow-md hover:border-[#0069d3]/40 active:scale-95 transition-all duration-200' : ''}`}
+                        className={`h-16 w-16 rounded-xl border border-[#ffba00] overflow-hidden bg-white shadow-sm flex-shrink-0 mb-3 flex items-center justify-center ${athlete.photoUrl ? 'cursor-pointer hover:scale-[1.08] hover:shadow-md hover:border-[#ffba00]/80 active:scale-95 transition-all duration-200' : ''}`}
                         title={athlete.photoUrl ? "Visualizar foto" : undefined}
                       >
                         {athlete.photoUrl ? (
@@ -915,7 +914,7 @@ export default function Dashboard() {
                       </p>
 
                       {/* Birthday date at the bottom - Enlarged */}
-                      <div className="mt-auto bg-amber-500 text-white px-3 py-1 rounded-full border border-amber-400 text-xs sm:text-sm font-black shadow-sm flex items-center gap-1">
+                      <div className="mt-auto bg-[#0069d3] text-white px-3 py-1 rounded-full border border-blue-400 text-xs sm:text-sm font-black shadow-sm flex items-center gap-1">
                         <Cake className="h-3.5 w-3.5" />
                         <span>{String(athlete.birthdayDay).padStart(2, '0')}/{String(athlete.birthdayMonth).padStart(2, '0')}</span>
                       </div>
