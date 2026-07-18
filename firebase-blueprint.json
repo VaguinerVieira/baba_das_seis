@@ -57,6 +57,18 @@
         "presentAthletes": { "type": "array", "items": { "type": "string" }, "description": "List of athlete IDs present on this date." }
       },
       "required": ["date", "presentAthletes"]
+    },
+    "AthleteFinance": {
+      "title": "Athlete Finance",
+      "description": "Independent financial metrics for an active athlete (Due, Paid, Pending).",
+      "type": "object",
+      "properties": {
+        "athleteId": { "type": "string", "description": "ID of the athlete." },
+        "devido": { "type": "number", "description": "Due amount." },
+        "pago": { "type": "number", "description": "Paid amount." },
+        "pendente": { "type": "number", "description": "Pending amount." }
+      },
+      "required": ["athleteId", "devido", "pago", "pendente"]
     }
   },
   "firestore": {
@@ -75,6 +87,10 @@
     "/attendance": {
       "schema": "Attendance",
       "description": "Collection of weekly attendance records."
+    },
+    "/athleteFinances": {
+      "schema": "AthleteFinance",
+      "description": "Independent athlete financial metrics managed by Admin."
     }
   }
 }

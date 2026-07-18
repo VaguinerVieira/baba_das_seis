@@ -29,7 +29,9 @@ import {
   X,
   Menu,
   PieChart as PieChartIcon,
-  UserPlus
+  UserPlus,
+  FileSpreadsheet,
+  Shirt
 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, addWeeks, previousSunday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -484,16 +486,16 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
             <Link 
               href="/atletas"
-              className="flex items-center justify-center px-4 sm:px-6 py-3 bg-[#ffba00] text-[#000002] rounded-xl font-black hover:bg-[#ffba00]/90 transition-all shadow-lg shadow-amber-200/50 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-sm sm:text-base border border-[#ffba00]/30"
+              className="flex items-center justify-center px-3 sm:px-4 py-2 bg-[#ffba00] text-[#000002] rounded-xl font-black hover:bg-[#ffba00]/90 transition-all shadow-lg shadow-amber-200/50 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-xs sm:text-sm border border-[#ffba00]/30"
             >
-              <Users className="h-5 w-5 mr-2 text-[#000002]" /> Atletas
+              <Users className="h-4 w-4 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#000002]" /> Atletas
             </Link>
-            <button 
-              onClick={() => setIsStatementModalOpen(true)}
-              className="flex items-center justify-center px-4 sm:px-6 py-3 bg-[#002874] text-white rounded-xl font-extrabold hover:bg-[#002874]/90 transition-all shadow-lg shadow-blue-900/10 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-sm sm:text-base border border-[#002874]/20"
+            <Link 
+              href="/financeiro-atletas"
+              className="flex items-center justify-center px-3 sm:px-4 py-2 bg-[#002874] text-white rounded-xl font-extrabold hover:bg-[#002874]/95 transition-all shadow-lg shadow-blue-900/10 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-xs sm:text-sm border border-[#002874]/20"
             >
-              <FileText className="h-5 w-5 mr-2" /> Extrato
-            </button>
+              <Shirt className="h-4 w-4 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#ffba00]" /> Uniforme
+            </Link>
           </div>
         </div>
 
