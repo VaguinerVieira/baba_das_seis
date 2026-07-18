@@ -28,7 +28,8 @@ import {
   Save,
   CheckCircle2,
   Lock,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ArrowUpDown
 } from 'lucide-react';
 import { normalizeGoogleDriveUrl } from '@/lib/utils';
 
@@ -70,6 +71,19 @@ export default function AthleteFinancesPage() {
     text: string;
   } | null>(null);
 
+  // Sorting state
+  const [sortField, setSortField] = useState<'nickname' | 'number' | 'uniformSize' | 'pago' | 'pendente'>('nickname');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: 'nickname' | 'number' | 'uniformSize' | 'pago' | 'pendente') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   useEffect(() => {
     // 1. Fetch athletes
     const qAthletes = query(collection(db, 'athletes'));
@@ -106,22 +120,61 @@ export default function AthleteFinancesPage() {
     };
   }, []);
 
-  // Filter and Sort active athletes alphabetically by Nickname (or Name fallback)
+  // Filter and Sort active athletes based on sortField and sortOrder
   const activeAthletes = useMemo(() => {
-    return athletes
+    const filtered = athletes
       .filter(a => a.status !== 'Afastado' && a.status !== 'Inativo')
       .filter(a => {
         const queryText = searchTerm.toLowerCase();
         const nickname = (a.nickname || '').toLowerCase();
         const name = (a.name || '').toLowerCase();
         return nickname.includes(queryText) || name.includes(queryText);
-      })
-      .sort((a, b) => {
-        const nameA = (a.nickname || a.name || '').trim();
-        const nameB = (b.nickname || b.name || '').trim();
-        return nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' });
       });
-  }, [athletes, searchTerm]);
+
+    return filtered.sort((a, b) => {
+      let valA: any;
+      let valB: any;
+
+      if (sortField === 'nickname') {
+        valA = (a.nickname || a.name || '').trim();
+        valB = (b.nickname || b.name || '').trim();
+        return sortOrder === 'asc' 
+          ? valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' })
+          : valB.localeCompare(valA, 'pt-BR', { sensitivity: 'base' });
+      } else if (sortField === 'number') {
+        const numA = a.number !== undefined && a.number !== null && a.number !== '' ? parseInt(String(a.number)) : -999999;
+        const numB = b.number !== undefined && b.number !== null && b.number !== '' ? parseInt(String(b.number)) : -999999;
+        valA = numA;
+        valB = numB;
+      } else if (sortField === 'uniformSize') {
+        const sizeOrder: Record<string, number> = { 'PP': 1, 'P': 2, 'M': 3, 'G': 4, 'GG': 5, 'XG': 6, 'XXG': 7 };
+        const sizeA = (a.uniformSize || 'M').toUpperCase();
+        const sizeB = (b.uniformSize || 'M').toUpperCase();
+        valA = sizeOrder[sizeA] || 99;
+        valB = sizeOrder[sizeB] || 99;
+      } else if (sortField === 'pago') {
+        const finA = finances[a.id];
+        const finB = finances[b.id];
+        valA = finA ? (finA.pago || 0) : 0;
+        valB = finB ? (finB.pago || 0) : 0;
+      } else if (sortField === 'pendente') {
+        const finA = finances[a.id] || { devido: 80, pago: 0 };
+        const finB = finances[b.id] || { devido: 80, pago: 0 };
+        const devA = finA.devido !== undefined && finA.devido !== null ? finA.devido : 80;
+        const devB = finB.devido !== undefined && finB.devido !== null ? finB.devido : 80;
+        valA = devA - (finA.pago || 0);
+        valB = devB - (finB.pago || 0);
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+
+      // Fallback secondary sort by nickname / name
+      const nameA = (a.nickname || a.name || '').trim();
+      const nameB = (b.nickname || b.name || '').trim();
+      return nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' });
+    });
+  }, [athletes, searchTerm, sortField, sortOrder, finances]);
 
   // Totals for top card overview
   const totals = useMemo(() => {
@@ -308,13 +361,53 @@ export default function AthleteFinancesPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="px-6 py-4">Atleta</th>
-                  <th className="px-4 py-4 text-center">Número</th>
-                  <th className="px-4 py-4 text-center">Uniforme</th>
+                  <th 
+                    onClick={() => handleSort('nickname')}
+                    className="px-6 py-4 select-none cursor-pointer hover:bg-gray-100/80 transition-colors rounded-tl-2xl"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Atleta</span>
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'nickname' ? 'text-blue-600' : 'text-gray-300'}`} />
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('number')}
+                    className="px-4 py-4 text-center select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Número</span>
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'number' ? 'text-blue-600' : 'text-gray-300'}`} />
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('uniformSize')}
+                    className="px-4 py-4 text-center select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Uniforme</span>
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'uniformSize' ? 'text-blue-600' : 'text-gray-300'}`} />
+                    </div>
+                  </th>
                   <th className="px-6 py-4 text-right">Devido</th>
-                  <th className="px-6 py-4 text-right">Pago</th>
-                  <th className="px-6 py-4 text-right">Pendente</th>
-                  {isAdmin && <th className="px-6 py-4 text-center w-28">Ações</th>}
+                  <th 
+                    onClick={() => handleSort('pago')}
+                    className="px-6 py-4 text-right select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      <span>Pago</span>
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'pago' ? 'text-blue-600' : 'text-gray-300'}`} />
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('pendente')}
+                    className="px-6 py-4 text-right select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      <span>Pendente</span>
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'pendente' ? 'text-blue-600' : 'text-gray-300'}`} />
+                    </div>
+                  </th>
+                  {isAdmin && <th className="px-6 py-4 text-center w-28 rounded-tr-2xl">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
