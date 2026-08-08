@@ -87,7 +87,9 @@ service cloud.firestore {
       return data.athleteId is string && data.athleteId.size() > 0 &&
              data.devido is number &&
              data.pago is number &&
-             data.pendente is number;
+             data.pendente is number &&
+             (!('observacoes' in data) || (data.observacoes is string && data.observacoes.size() <= 200)) &&
+             (!('confirmed' in data) || (data.confirmed is bool));
     }
 
     // Athletes collection

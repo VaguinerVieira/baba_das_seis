@@ -60,13 +60,15 @@
     },
     "AthleteFinance": {
       "title": "Athlete Finance",
-      "description": "Independent financial metrics for an active athlete (Due, Paid, Pending).",
+      "description": "Independent financial metrics for an active athlete (Due, Paid, Pending, Notes, Confirmation).",
       "type": "object",
       "properties": {
         "athleteId": { "type": "string", "description": "ID of the athlete." },
         "devido": { "type": "number", "description": "Due amount." },
         "pago": { "type": "number", "description": "Paid amount." },
-        "pendente": { "type": "number", "description": "Pending amount." }
+        "pendente": { "type": "number", "description": "Pending amount." },
+        "observacoes": { "type": "string", "maxLength": 200, "description": "Notes up to 200 characters." },
+        "confirmed": { "type": "boolean", "description": "Whether uniform order is confirmed." }
       },
       "required": ["athleteId", "devido", "pago", "pendente"]
     }

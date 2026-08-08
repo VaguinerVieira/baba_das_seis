@@ -40,7 +40,18 @@ import {
   Menu,
   MessageCircle,
   ExternalLink,
-  FileSearch
+  FileSearch,
+  BarChart3,
+  Printer,
+  ArrowUpRight,
+  ArrowDownRight,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  Filter,
+  Download,
+  Calculator,
+  FileText
 } from 'lucide-react';
 import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -50,7 +61,12 @@ const monthAbbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set'
 export default function AdminPage() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'athletes' | 'transactions' | 'categories'>('athletes');
+  const [activeTab, setActiveTab] = useState<'athletes' | 'categories' | 'transactions' | 'reports'>('athletes');
+  
+  // Report states
+  const [reportYear, setReportYear] = useState<string>('all');
+  const [reportType, setReportType] = useState<'all' | 'income' | 'expense'>('all');
+  const [reportSearchTerm, setReportSearchTerm] = useState<string>('');
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -104,6 +120,102 @@ export default function AdminPage() {
   }, [transactions]);
   const [categories, setCategories] = useState<any[]>([]);
   const [athleteSearchTerm, setAthleteSearchTerm] = useState('');
+
+  const availableReportYears = useMemo(() => {
+    const yearsSet = new Set<string>();
+    transactions.forEach((t: any) => {
+      if (t.date && typeof t.date === 'string' && t.date.length >= 4) {
+        yearsSet.add(t.date.substring(0, 4));
+      }
+    });
+    const currentYr = new Date().getFullYear().toString();
+    yearsSet.add(currentYr);
+    return Array.from(yearsSet).sort((a, b) => b.localeCompare(a));
+  }, [transactions]);
+
+  const reportData = useMemo(() => {
+    const baseYearFiltered = enrichedTransactions.filter((t: any) => {
+      return reportYear === 'all' || (t.date && t.date.startsWith(reportYear));
+    });
+
+    const totalIncome = baseYearFiltered
+      .filter((t: any) => t.type === 'income')
+      .reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+
+    const athleteIncome = baseYearFiltered
+      .filter((t: any) => t.type === 'income' && (t.isMonthlyFee || t.athleteId))
+      .reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+
+    const otherIncome = totalIncome - athleteIncome;
+
+    const totalExpense = baseYearFiltered
+      .filter((t: any) => t.type === 'expense')
+      .reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+
+    const netBalance = totalIncome - totalExpense;
+
+    const incomeCount = baseYearFiltered.filter((t: any) => t.type === 'income').length;
+    const expenseCount = baseYearFiltered.filter((t: any) => t.type === 'expense').length;
+    const athleteFeeCount = baseYearFiltered.filter((t: any) => t.type === 'income' && (t.isMonthlyFee || t.athleteId)).length;
+
+    // Filtered list for detailed report table
+    const filteredList = baseYearFiltered.filter((t: any) => {
+      const typeMatch = reportType === 'all' || t.type === reportType;
+      const searchLower = reportSearchTerm.toLowerCase();
+      const athlete = athletes.find((a: any) => a.id === t.athleteId);
+      const athleteName = athlete ? `${athlete.name} ${athlete.nickname}`.toLowerCase() : '';
+      const searchMatch = !reportSearchTerm || 
+        (t.description || '').toLowerCase().includes(searchLower) ||
+        (t.category || '').toLowerCase().includes(searchLower) ||
+        athleteName.includes(searchLower);
+
+      return typeMatch && searchMatch;
+    });
+
+    // Category breakdown
+    const incomeCatMap: Record<string, number> = {};
+    const expenseCatMap: Record<string, number> = {};
+
+    baseYearFiltered.forEach((t: any) => {
+      if (t.type === 'income') {
+        const cat = (t.category || (t.isMonthlyFee ? 'Mensalidades' : 'Outras Entradas')).trim();
+        incomeCatMap[cat] = (incomeCatMap[cat] || 0) + (t.amount || 0);
+      } else {
+        const cat = (t.category || 'Outras Saídas').trim();
+        expenseCatMap[cat] = (expenseCatMap[cat] || 0) + (t.amount || 0);
+      }
+    });
+
+    const incomeCatList = Object.entries(incomeCatMap)
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        percentage: totalIncome > 0 ? (amount / totalIncome) * 100 : 0
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const expenseCatList = Object.entries(expenseCatMap)
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        percentage: totalExpense > 0 ? (amount / totalExpense) * 100 : 0
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    return {
+      filteredList,
+      totalIncome,
+      athleteIncome,
+      otherIncome,
+      totalExpense,
+      netBalance,
+      incomeCount,
+      expenseCount,
+      athleteFeeCount,
+      incomeCatList,
+      expenseCatList
+    };
+  }, [enrichedTransactions, reportYear, reportType, reportSearchTerm, athletes]);
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -297,6 +409,15 @@ export default function AdminPage() {
             >
               <DollarSign className="h-5 w-5 mr-3" /> Transações
             </button>
+            <button 
+              onClick={() => {
+                setActiveTab('reports');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 ${activeTab === 'reports' ? 'bg-cyan-50 text-cyan-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <BarChart3 className="h-5 w-5 mr-3 text-cyan-600" /> Relatórios
+            </button>
         </nav>
         <div className="p-4 border-t border-gray-200">
           <button 
@@ -315,6 +436,7 @@ export default function AdminPage() {
             {activeTab === 'athletes' && 'Gerenciar Atletas'}
             {activeTab === 'transactions' && 'Gerenciar Transações'}
             {activeTab === 'categories' && 'Gerenciar Categorias'}
+            {activeTab === 'reports' && 'Relatórios e Balanço Financeiro'}
           </h2>
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-stretch sm:items-center w-full sm:w-auto">
             {activeTab === 'athletes' && (
@@ -336,214 +458,537 @@ export default function AdminPage() {
               >
                 <LayoutDashboard className="h-4 w-4 mr-2" /> Dashboard
               </button>
-              <button 
-                onClick={() => openModal()}
-                className="flex-1 sm:flex-none bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center hover:bg-cyan-600 transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" /> Novo
-              </button>
+              {activeTab === 'reports' ? (
+                <button 
+                  onClick={() => window.print()}
+                  className="flex-1 sm:flex-none bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center hover:bg-cyan-700 transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-200"
+                >
+                  <Printer className="h-4 w-4 mr-2" /> Exportar PDF
+                </button>
+              ) : (
+                <button 
+                  onClick={() => openModal()}
+                  className="flex-1 sm:flex-none bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center hover:bg-cyan-600 transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Novo
+                </button>
+              )}
             </div>
           </div>
         </header>
 
         <div className="p-4 sm:p-8">
           {/* Content based on activeTab */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left min-w-[800px] sm:min-w-full">
-              {activeTab === 'athletes' && (
-                <>
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                      <th className="px-6 py-4 font-medium">Foto</th>
-                      <th className="px-6 py-4 font-medium">Nome</th>
-                      <th className="px-6 py-4 font-medium">Apelido</th>
-                      <th className="px-6 py-4 font-medium">Aniversário</th>
-                      <th className="px-6 py-4 font-medium">WhatsApp</th>
-                      <th className="px-6 py-4 font-medium">Meses Pagos</th>
-                      <th className="px-6 py-4 font-medium text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {athletes
-                      .filter(a => 
-                        a.name?.toLowerCase().includes(athleteSearchTerm.toLowerCase()) || 
-                        a.nickname?.toLowerCase().includes(athleteSearchTerm.toLowerCase())
-                      )
-                      .map(a => (
-                      <tr key={a.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          {a.photoUrl ? (
-                            <div className="relative h-10 w-10 rounded-full overflow-hidden border border-gray-200">
-                              <Image 
-                                src={a.photoUrl} 
-                                alt={a.nickname} 
-                                fill
-                                className="object-cover" 
-                                referrerPolicy="no-referrer" 
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                              <Users className="h-5 w-5" />
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-800 flex items-center">
-                              {a.name}
-                              {a.isBoardMember && (
-                                <span className="ml-2 px-1.5 py-0.5 bg-cyan-100 text-cyan-700 text-[10px] font-bold rounded uppercase tracking-wider">
-                                  Diretoria
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{a.nickname}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{a.birthdayDay}/{monthAbbr[a.birthdayMonth - 1]}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          {a.whatsapp ? (
-                            <a 
-                              href={`https://wa.me/${a.whatsapp.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-green-600 hover:text-green-700 flex items-center transition-colors font-medium"
-                            >
-                              <svg className="h-5 w-5 mr-1.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                              </svg>
-                              {a.whatsapp}
-                            </a>
-                          ) : '-'}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="grid grid-cols-6 gap-1 w-fit">
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => {
-                              const isPaid = a.paidMonths?.includes(m);
-                              return (
-                                <div 
-                                  key={m} 
-                                  className={`flex flex-col items-center p-1 rounded-lg border transition-all ${isPaid ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100 opacity-40'}`}
-                                  title={monthAbbr[m - 1]}
-                                >
-                                  <span className={`text-[8px] font-bold uppercase mb-0.5 ${isPaid ? 'text-green-700' : 'text-gray-400'}`}>{monthAbbr[m - 1]}</span>
-                                  {isPaid ? (
-                                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                                  ) : (
-                                    <div className="h-3.5 w-3.5 rounded-full border border-gray-200" />
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button onClick={() => openModal(a)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
-                          <button onClick={() => handleDelete(a.id, 'athletes')} className="text-red-600 hover:text-red-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Trash2 className="h-4 w-4" /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </>
-              )}
+          {activeTab === 'reports' ? (
+            <div className="space-y-6 printable-report">
+              {/* Print CSS rules */}
+              <style>{`
+                @media print {
+                  body {
+                    background-color: white !important;
+                    color: black !important;
+                  }
+                  .no-print {
+                    display: none !important;
+                  }
+                  aside, header, nav, button {
+                    display: none !important;
+                  }
+                  main {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    overflow: visible !important;
+                  }
+                  .printable-report {
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                  }
+                  .print-header {
+                    display: block !important;
+                  }
+                  .print-shadow-none {
+                    box-shadow: none !important;
+                    border: 1px solid #e5e7eb !important;
+                  }
+                }
+              `}</style>
 
-              {activeTab === 'transactions' && (
-                <>
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                      <th className="px-6 py-4 font-medium">Data</th>
-                      <th className="px-2 py-4 font-medium text-center w-16">CP</th>
-                      <th className="px-6 py-4 font-medium">Descrição</th>
-                      <th className="px-6 py-4 font-medium text-right">Valor</th>
-                      <th className="px-6 py-4 font-medium text-right">Saldo</th>
-                      <th className="px-6 py-4 font-medium text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {enrichedTransactions.map(t => (
-                      <tr key={t.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
-                        <td className="px-2 py-4 text-center">
-                          {t.externalLink ? (
-                            <a 
-                              href={t.externalLink} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center p-1.5 bg-cyan-50 text-cyan-600 rounded-lg hover:bg-cyan-100 transition-colors border border-cyan-100"
-                              title="Ver Comprovante"
-                            >
-                              <FileSearch className="h-4 w-4" />
-                            </a>
-                          ) : (
-                            <span className="text-gray-200">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          <div className="flex flex-col">
-                            <span>{t.description}</span>
-                            {t.isMonthlyFee && t.athleteId && (
-                              <span className="text-[10px] text-cyan-600 font-bold uppercase">
-                                Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
-                                {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
+              {/* Printable Header - Visible when printing */}
+              <div className="hidden print-header mb-6 pb-4 border-b border-gray-300">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">BABA DAS SEIS</h1>
+                    <p className="text-sm text-gray-600">Relatório e Balanço Financeiro Geral</p>
+                  </div>
+                  <div className="text-right text-xs text-gray-500">
+                    <p>Gerado em: {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                    <p>Filtro Ano: {reportYear === 'all' ? 'Todos os Anos' : reportYear}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Controls and Filter Bar */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 no-print flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  {/* Year Filter */}
+                  <div className="flex items-center space-x-2 bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-200">
+                    <Calendar className="h-4 w-4 text-cyan-600" />
+                    <span className="text-xs font-bold text-gray-500 uppercase">Ano:</span>
+                    <select 
+                      value={reportYear}
+                      onChange={(e) => setReportYear(e.target.value)}
+                      className="bg-transparent text-sm font-bold text-gray-800 outline-none cursor-pointer"
+                    >
+                      <option value="all">Todos os Anos</option>
+                      {availableReportYears.map(yr => (
+                        <option key={yr} value={yr}>{yr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Type Filter */}
+                  <div className="flex items-center space-x-2 bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-200">
+                    <Filter className="h-4 w-4 text-cyan-600" />
+                    <span className="text-xs font-bold text-gray-500 uppercase">Tipo:</span>
+                    <select 
+                      value={reportType}
+                      onChange={(e) => setReportType(e.target.value as any)}
+                      className="bg-transparent text-sm font-bold text-gray-800 outline-none cursor-pointer"
+                    >
+                      <option value="all">Todas as Transações</option>
+                      <option value="income">Apenas Entradas</option>
+                      <option value="expense">Apenas Saídas</option>
+                    </select>
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative flex-1 min-w-[220px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text"
+                      placeholder="Buscar por descrição, atleta ou categoria..."
+                      value={reportSearchTerm}
+                      onChange={(e) => setReportSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => window.print()}
+                  className="w-full md:w-auto bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-200"
+                >
+                  <Printer className="h-4 w-4 mr-2" /> Exportar PDF
+                </button>
+              </div>
+
+              {/* Balanço / KPI Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Total Entradas */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 print-shadow-none relative overflow-hidden">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Entradas Totais</span>
+                    <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                      <ArrowUpRight className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-emerald-600">
+                    R$ {reportData.totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-2 font-medium">
+                    {reportData.incomeCount} lançamentos de entrada
+                  </p>
+                </div>
+
+                {/* Entradas Atletas (Somadas/Integral) */}
+                <div className="bg-gradient-to-br from-cyan-900 to-[#002874] text-white p-6 rounded-2xl shadow-md print-shadow-none relative overflow-hidden">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold text-cyan-200 uppercase tracking-wider">Mensalidades Atletas (Integral)</span>
+                    <span className="p-2 bg-white/10 text-cyan-300 rounded-xl backdrop-blur-sm">
+                      <Users className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-white">
+                    R$ {reportData.athleteIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                  <p className="text-[11px] text-cyan-200/90 mt-2 font-medium">
+                    {reportData.athleteFeeCount} mensalidades somadas
+                  </p>
+                </div>
+
+                {/* Total Saídas */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 print-shadow-none relative overflow-hidden">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Saídas Totais</span>
+                    <span className="p-2 bg-red-50 text-red-600 rounded-xl">
+                      <ArrowDownRight className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-red-600">
+                    R$ {reportData.totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-2 font-medium">
+                    {reportData.expenseCount} lançamentos de saída
+                  </p>
+                </div>
+
+                {/* Balanço Líquido */}
+                <div className={`p-6 rounded-2xl shadow-sm border print-shadow-none relative overflow-hidden ${
+                  reportData.netBalance >= 0 
+                    ? 'bg-emerald-50/50 border-emerald-200' 
+                    : 'bg-red-50/50 border-red-200'
+                }`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Balanço Final (Saldo)</span>
+                    <span className={`p-2 rounded-xl ${
+                      reportData.netBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      <Calculator className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <div className={`text-2xl font-black ${
+                    reportData.netBalance >= 0 ? 'text-emerald-700' : 'text-red-700'
+                  }`}>
+                    R$ {reportData.netBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                  <p className={`text-[11px] mt-2 font-bold uppercase tracking-wider ${
+                    reportData.netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'
+                  }`}>
+                    {reportData.netBalance >= 0 ? 'Superávit Acumulado' : 'Déficit Acumulado'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Resumo por Categoria */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Entradas por Categoria */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 print-shadow-none">
+                  <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2 text-emerald-600" /> Detalhamento de Entradas por Categoria
+                  </h3>
+                  <div className="space-y-3">
+                    {reportData.incomeCatList.map((item) => (
+                      <div key={item.category} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold text-gray-700">
+                          <span className="capitalize">{item.category}</span>
+                          <span>R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({item.percentage.toFixed(1)}%)</span>
+                        </div>
+                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, item.percentage)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {reportData.incomeCatList.length === 0 && (
+                      <p className="text-xs text-gray-400 italic">Nenhuma entrada cadastrada no período.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Saídas por Categoria */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 print-shadow-none">
+                  <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center">
+                    <TrendingDown className="h-5 w-5 mr-2 text-red-600" /> Detalhamento de Saídas por Categoria
+                  </h3>
+                  <div className="space-y-3">
+                    {reportData.expenseCatList.map((item) => (
+                      <div key={item.category} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold text-gray-700">
+                          <span className="capitalize">{item.category}</span>
+                          <span>R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({item.percentage.toFixed(1)}%)</span>
+                        </div>
+                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-red-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, item.percentage)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {reportData.expenseCatList.length === 0 && (
+                      <p className="text-xs text-gray-400 italic">Nenhuma saída cadastrada no período.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista Detalhada de Transações (Entradas e Saídas) */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 print-shadow-none overflow-hidden">
+                <div className="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">Extrato Consolidado de Transações</h3>
+                    <p className="text-xs text-gray-500">Listagem de todas as entradas e saídas registradas ({reportData.filteredList.length} itens)</p>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left min-w-[700px] sm:min-w-full">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
+                        <th className="px-6 py-4 font-medium">Data</th>
+                        <th className="px-4 py-4 font-medium">Tipo</th>
+                        <th className="px-6 py-4 font-medium">Descrição / Atleta</th>
+                        <th className="px-6 py-4 font-medium">Categoria</th>
+                        <th className="px-6 py-4 font-medium text-right">Valor</th>
+                        <th className="px-6 py-4 font-medium text-right">Saldo Acumulado</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {reportData.filteredList.map((t: any) => {
+                        const athlete = athletes.find((a: any) => a.id === t.athleteId);
+                        return (
+                          <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                              {format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                t.type === 'income' 
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                                  : 'bg-red-50 text-red-700 border border-red-100'
+                              }`}>
+                                {t.type === 'income' ? 'Entrada' : 'Saída'}
                               </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              <div className="flex flex-col">
+                                <span className="font-semibold">{t.description || '-'}</span>
+                                {t.isMonthlyFee && athlete && (
+                                  <span className="text-[10px] text-cyan-600 font-bold uppercase">
+                                    Atleta: {athlete.nickname || athlete.name}
+                                    {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 capitalize">
+                              {t.category || (t.isMonthlyFee ? 'Mensalidade' : '-')}
+                            </td>
+                            <td className={`px-6 py-4 text-sm font-bold text-right ${
+                              t.type === 'income' ? 'text-emerald-600' : 'text-red-600'
+                            }`}>
+                              {t.type === 'income' ? '+' : '-'} R$ {(t.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className={`px-6 py-4 text-sm font-bold text-right ${
+                              (t.runningBalance || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'
+                            }`}>
+                              R$ {(t.runningBalance || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {reportData.filteredList.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                            Nenhuma transação encontrada com os filtros selecionados.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-[800px] sm:min-w-full">
+                {activeTab === 'athletes' && (
+                  <>
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                        <th className="px-6 py-4 font-medium">Foto</th>
+                        <th className="px-6 py-4 font-medium">Nome</th>
+                        <th className="px-6 py-4 font-medium">Apelido</th>
+                        <th className="px-6 py-4 font-medium">Aniversário</th>
+                        <th className="px-6 py-4 font-medium">WhatsApp</th>
+                        <th className="px-6 py-4 font-medium">Meses Pagos</th>
+                        <th className="px-6 py-4 font-medium text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {athletes
+                        .filter(a => 
+                          a.name?.toLowerCase().includes(athleteSearchTerm.toLowerCase()) || 
+                          a.nickname?.toLowerCase().includes(athleteSearchTerm.toLowerCase())
+                        )
+                        .map(a => (
+                        <tr key={a.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            {a.photoUrl ? (
+                              <div className="relative h-10 w-10 rounded-full overflow-hidden border border-gray-200">
+                                <Image 
+                                  src={a.photoUrl} 
+                                  alt={a.nickname} 
+                                  fill
+                                  className="object-cover" 
+                                  referrerPolicy="no-referrer" 
+                                />
+                              </div>
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                <Users className="h-5 w-5" />
+                              </div>
                             )}
-                            {t.externalLink && (
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-800 flex items-center">
+                                {a.name}
+                                {a.isBoardMember && (
+                                  <span className="ml-2 px-1.5 py-0.5 bg-cyan-100 text-cyan-700 text-[10px] font-bold rounded uppercase tracking-wider">
+                                    Diretoria
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{a.nickname}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{a.birthdayDay}/{monthAbbr[a.birthdayMonth - 1]}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {a.whatsapp ? (
+                              <a 
+                                href={`https://wa.me/${a.whatsapp.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-600 hover:text-green-700 flex items-center transition-colors font-medium"
+                              >
+                                <svg className="h-5 w-5 mr-1.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                                </svg>
+                                {a.whatsapp}
+                              </a>
+                            ) : '-'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="grid grid-cols-6 gap-1 w-fit">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => {
+                                const isPaid = a.paidMonths?.includes(m);
+                                return (
+                                  <div 
+                                    key={m} 
+                                    className={`flex flex-col items-center p-1 rounded-lg border transition-all ${isPaid ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100 opacity-40'}`}
+                                    title={monthAbbr[m - 1]}
+                                  >
+                                    <span className={`text-[8px] font-bold uppercase mb-0.5 ${isPaid ? 'text-green-700' : 'text-gray-400'}`}>{monthAbbr[m - 1]}</span>
+                                    {isPaid ? (
+                                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                                    ) : (
+                                      <div className="h-3.5 w-3.5 rounded-full border border-gray-200" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                            <button onClick={() => openModal(a)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
+                            <button onClick={() => handleDelete(a.id, 'athletes')} className="text-red-600 hover:text-red-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Trash2 className="h-4 w-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </>
+                )}
+
+                {activeTab === 'transactions' && (
+                  <>
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                        <th className="px-6 py-4 font-medium">Data</th>
+                        <th className="px-2 py-4 font-medium text-center w-16">CP</th>
+                        <th className="px-6 py-4 font-medium">Descrição</th>
+                        <th className="px-6 py-4 font-medium text-right">Valor</th>
+                        <th className="px-6 py-4 font-medium text-right">Saldo</th>
+                        <th className="px-6 py-4 font-medium text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {enrichedTransactions.map(t => (
+                        <tr key={t.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm text-gray-600">{format(new Date(t.date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
+                          <td className="px-2 py-4 text-center">
+                            {t.externalLink ? (
                               <a 
                                 href={t.externalLink} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-[10px] text-cyan-600 font-bold uppercase flex items-center hover:underline mt-1"
+                                className="inline-flex items-center justify-center p-1.5 bg-cyan-50 text-cyan-600 rounded-lg hover:bg-cyan-100 transition-colors border border-cyan-100"
+                                title="Ver Comprovante"
                               >
-                                <ExternalLink className="h-3 w-3 mr-1" /> Ver Comprovante
+                                <FileSearch className="h-4 w-4" />
                               </a>
+                            ) : (
+                              <span className="text-gray-200">-</span>
                             )}
-                          </div>
-                        </td>
-                        <td className={`px-6 py-4 text-sm font-bold text-right ${t.type === 'income' ? 'text-cyan-600' : 'text-red-600'}`}>
-                          {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className={`px-6 py-4 text-sm font-bold text-right ${t.runningBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {t.runningBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button onClick={() => openModal(t)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
-                          <button onClick={() => handleDelete(t.id, 'transactions')} className="text-red-600 hover:text-red-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Trash2 className="h-4 w-4" /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </>
-              )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            <div className="flex flex-col">
+                              <span>{t.description}</span>
+                              {t.isMonthlyFee && t.athleteId && (
+                                <span className="text-[10px] text-cyan-600 font-bold uppercase">
+                                  Atleta: {athletes.find(a => a.id === t.athleteId)?.nickname || athletes.find(a => a.id === t.athleteId)?.name || 'Desconhecido'}
+                                  {t.referenceMonth && ` • Ref: ${monthAbbr[parseInt(t.referenceMonth) - 1]}`}
+                                </span>
+                              )}
+                              {t.externalLink && (
+                                <a 
+                                  href={t.externalLink} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-cyan-600 font-bold uppercase flex items-center hover:underline mt-1"
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" /> Ver Comprovante
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                          <td className={`px-6 py-4 text-sm font-bold text-right ${t.type === 'income' ? 'text-cyan-600' : 'text-red-600'}`}>
+                            {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className={`px-6 py-4 text-sm font-bold text-right ${t.runningBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {t.runningBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                            <button onClick={() => openModal(t)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
+                            <button onClick={() => handleDelete(t.id, 'transactions')} className="text-red-600 hover:text-red-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Trash2 className="h-4 w-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </>
+                )}
 
-              {activeTab === 'categories' && (
-                <>
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                      <th className="px-6 py-4 font-medium">Nome</th>
-                      <th className="px-6 py-4 font-medium">Tipo</th>
-                      <th className="px-6 py-4 font-medium text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {categories.map(c => (
-                      <tr key={c.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{c.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 capitalize">{c.type === 'income' ? 'Entrada' : 'Saída'}</td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button onClick={() => openModal(c)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
-                          <button onClick={() => handleDelete(c.id, 'categories')} className="text-red-600 hover:text-red-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Trash2 className="h-4 w-4" /></button>
-                        </td>
+                {activeTab === 'categories' && (
+                  <>
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                        <th className="px-6 py-4 font-medium">Nome</th>
+                        <th className="px-6 py-4 font-medium">Tipo</th>
+                        <th className="px-6 py-4 font-medium text-right">Ações</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </>
-              )}
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {categories.map(c => (
+                        <tr key={c.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{c.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600 capitalize">{c.type === 'income' ? 'Entrada' : 'Saída'}</td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                            <button onClick={() => openModal(c)} className="text-cyan-600 hover:text-cyan-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Edit2 className="h-4 w-4" /></button>
+                            <button onClick={() => handleDelete(c.id, 'categories')} className="text-red-600 hover:text-red-800 cursor-pointer hover:scale-125 active:scale-90 transition-all duration-200"><Trash2 className="h-4 w-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </>
+                )}
 
-            </table>
+              </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
 

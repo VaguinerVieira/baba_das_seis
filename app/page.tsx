@@ -372,6 +372,13 @@ export default function Dashboard() {
                 <Calendar className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
                 <span>Presença</span>
               </Link>
+              <Link 
+                href="/uniformes-2026" 
+                className="text-xs lg:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all"
+              >
+                <Shirt className="h-4 w-4 mr-1 text-gray-400 group-hover:text-[#0069d3]" />
+                <span>Uniformes</span>
+              </Link>
               {user && isAdmin ? (
                 <>
                   <Link href="/admin" className="text-xs lg:text-sm font-semibold text-gray-700 hover:text-[#0069d3] flex items-center cursor-pointer transition-all">
@@ -432,6 +439,14 @@ export default function Dashboard() {
                 <Calendar className="h-4 w-4 mr-2 text-gray-400" />
                 Presença
               </Link>
+              <Link 
+                href="/uniformes-2026" 
+                className="flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-[#0069d3] hover:bg-gray-50 transition-all"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Shirt className="h-4 w-4 mr-2 text-gray-400" />
+                Uniformes
+              </Link>
               
               {user && isAdmin ? (
                 <>
@@ -491,7 +506,7 @@ export default function Dashboard() {
               <Users className="h-4 w-4 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#000002]" /> Atletas
             </Link>
             <Link 
-              href="/financeiro-atletas"
+              href="/uniformes-2026"
               className="flex items-center justify-center px-3 sm:px-4 py-2 bg-[#002874] text-white rounded-xl font-extrabold hover:bg-[#002874]/95 transition-all shadow-lg shadow-blue-900/10 cursor-pointer hover:scale-105 active:scale-95 duration-200 text-xs sm:text-sm border border-[#002874]/20"
             >
               <Shirt className="h-4 w-4 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#ffba00]" /> Uniforme
@@ -941,7 +956,7 @@ export default function Dashboard() {
               onClick={() => setIsStatementModalOpen(true)}
               className="px-4 py-2 bg-blue-50 text-[#002874] hover:bg-blue-100 rounded-xl text-sm font-bold transition-all flex items-center border border-blue-100 shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-200"
             >
-              Ver todas <ArrowRight className="h-4 w-4 ml-2" />
+              Extrato <ArrowRight className="h-4 w-4 ml-2" />
             </button>
           </div>
           <div className="overflow-x-auto">

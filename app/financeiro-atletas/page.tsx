@@ -48,6 +48,8 @@ interface AthleteFinance {
   devido: number;
   pago: number;
   pendente: number;
+  observacoes?: string;
+  confirmed?: boolean;
 }
 
 export default function AthleteFinancesPage() {
@@ -63,7 +65,8 @@ export default function AthleteFinancesPage() {
   const [editForm, setEditForm] = useState<{
     devido: string;
     pago: string;
-  }>({ devido: '80', pago: '0' });
+    observacoes: string;
+  }>({ devido: '80', pago: '0', observacoes: '' });
   
   // Status message state
   const [statusMessage, setStatusMessage] = useState<{
@@ -208,6 +211,7 @@ export default function AthleteFinancesPage() {
     setEditForm({
       devido: String(currentFinance?.devido ?? 80),
       pago: String(currentFinance?.pago ?? 0),
+      observacoes: currentFinance?.observacoes ?? '',
     });
   };
 
@@ -227,17 +231,37 @@ export default function AthleteFinancesPage() {
         devido: devVal,
         pago: pagVal,
         pendente: penVal,
+        observacoes: editForm.observacoes.slice(0, 200),
         updatedAt: serverTimestamp()
       }, { merge: true });
 
       setEditingId(null);
-      setStatusMessage({ type: 'success', text: 'Dados financeiros salvos com sucesso!' });
+      setStatusMessage({ type: 'success', text: 'Dados salvos com sucesso!' });
       
       // Clear status message after 3 seconds
       setTimeout(() => setStatusMessage(null), 3000);
     } catch (error) {
       console.error("Erro ao salvar dados financeiros:", error);
       setStatusMessage({ type: 'error', text: 'Ocorreu um erro ao salvar os dados.' });
+    }
+  };
+
+  const handleToggleConfirmed = async (athleteId: string, currentState: boolean) => {
+    if (!isAdmin) {
+      setStatusMessage({ type: 'error', text: 'Permissão negada. Apenas administradores podem alterar o status.' });
+      setTimeout(() => setStatusMessage(null), 3000);
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, 'athleteFinances', athleteId), {
+        athleteId,
+        confirmed: !currentState,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      console.error("Erro ao alterar confirmação:", error);
+      setStatusMessage({ type: 'error', text: 'Erro ao alterar o status de confirmação.' });
     }
   };
 
@@ -278,17 +302,19 @@ export default function AthleteFinancesPage() {
         </div>
 
         {/* Totals Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-6 mb-8`}>
           {/* Card Devido */}
-          <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-blue-500 uppercase tracking-wider">Total Devido</p>
-              <h3 className="text-2xl sm:text-3xl font-black text-[#002874] mt-1">{formatCurrency(totals.dev)}</h3>
+          {isAdmin && (
+            <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-blue-500 uppercase tracking-wider">Total Devido</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-[#002874] mt-1">{formatCurrency(totals.dev)}</h3>
+              </div>
+              <div className="p-4 bg-blue-50 rounded-2xl text-blue-600">
+                <DollarSign className="h-6 w-6" />
+              </div>
             </div>
-            <div className="p-4 bg-blue-50 rounded-2xl text-blue-600">
-              <DollarSign className="h-6 w-6" />
-            </div>
-          </div>
+          )}
 
           {/* Card Pago */}
           <div className="bg-white p-6 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between">
@@ -302,15 +328,17 @@ export default function AthleteFinancesPage() {
           </div>
 
           {/* Card Pendente */}
-          <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-red-500 uppercase tracking-wider">Total Pendente</p>
-              <h3 className="text-2xl sm:text-3xl font-black text-red-700 mt-1">{formatCurrency(totals.pen)}</h3>
+          {isAdmin && (
+            <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-red-500 uppercase tracking-wider">Total Pendente</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-red-700 mt-1">{formatCurrency(totals.pen)}</h3>
+              </div>
+              <div className="p-4 bg-red-50 rounded-2xl text-red-600">
+                <AlertCircle className="h-6 w-6" />
+              </div>
             </div>
-            <div className="p-4 bg-red-50 rounded-2xl text-red-600">
-              <AlertCircle className="h-6 w-6" />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Search & Permissions Info */}
@@ -388,26 +416,29 @@ export default function AthleteFinancesPage() {
                       <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'uniformSize' ? 'text-blue-600' : 'text-gray-300'}`} />
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-right">Devido</th>
+                  <th className="px-6 py-4 text-left">Observações</th>
+                  {isAdmin && <th className="px-6 py-4 text-right">Devido</th>}
                   <th 
                     onClick={() => handleSort('pago')}
-                    className="px-6 py-4 text-right select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
+                    className={`px-6 py-4 text-right select-none cursor-pointer hover:bg-gray-100/80 transition-colors ${!isAdmin ? 'rounded-tr-2xl' : ''}`}
                   >
                     <div className="flex items-center justify-end gap-1">
                       <span>Pago</span>
                       <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'pago' ? 'text-blue-600' : 'text-gray-300'}`} />
                     </div>
                   </th>
-                  <th 
-                    onClick={() => handleSort('pendente')}
-                    className="px-6 py-4 text-right select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      <span>Pendente</span>
-                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'pendente' ? 'text-blue-600' : 'text-gray-300'}`} />
-                    </div>
-                  </th>
-                  {isAdmin && <th className="px-6 py-4 text-center w-28 rounded-tr-2xl">Ações</th>}
+                  {isAdmin && (
+                    <th 
+                      onClick={() => handleSort('pendente')}
+                      className="px-6 py-4 text-right select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Pendente</span>
+                        <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'pendente' ? 'text-blue-600' : 'text-gray-300'}`} />
+                      </div>
+                    </th>
+                  )}
+                  {isAdmin && <th className="px-6 py-4 text-center w-36 sm:w-44 rounded-tr-2xl">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -448,24 +479,52 @@ export default function AthleteFinancesPage() {
                           </div>
                         </td>
 
-                        {/* Column: Devido */}
-                        <td className="px-6 py-4 text-right">
+                        {/* Column: Observações */}
+                        <td className="px-6 py-4 text-left max-w-xs">
                           {isEditing ? (
-                            <div className="flex items-center justify-end">
-                              <span className="text-xs font-semibold text-gray-400 mr-1">R$</span>
-                              <input
-                                type="text"
-                                value={editForm.devido}
-                                onChange={(e) => setEditForm({ ...editForm, devido: e.target.value })}
-                                className="w-20 px-2 py-1 border border-gray-300 rounded-lg text-sm text-right focus:ring-1 focus:ring-blue-500 outline-none"
+                            <div className="flex flex-col gap-1">
+                              <textarea
+                                rows={2}
+                                maxLength={200}
+                                value={editForm.observacoes}
+                                onChange={(e) => setEditForm({ ...editForm, observacoes: e.target.value })}
+                                placeholder="Observações (máx 200 car.)..."
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none resize-none bg-white"
                               />
+                              <span className="text-[10px] text-gray-400 text-right font-medium">
+                                {editForm.observacoes.length}/200
+                              </span>
                             </div>
                           ) : (
-                            <span className="font-bold text-blue-600 text-sm sm:text-base">
-                              {formatCurrency(devidoValue)}
+                            <span 
+                              className="text-xs text-gray-600 block line-clamp-2 break-words" 
+                              title={fin.observacoes || ''}
+                            >
+                              {fin.observacoes && fin.observacoes.trim() !== '' ? fin.observacoes : '-'}
                             </span>
                           )}
                         </td>
+
+                        {/* Column: Devido */}
+                        {isAdmin && (
+                          <td className="px-6 py-4 text-right">
+                            {isEditing ? (
+                              <div className="flex items-center justify-end">
+                                <span className="text-xs font-semibold text-gray-400 mr-1">R$</span>
+                                <input
+                                  type="text"
+                                  value={editForm.devido}
+                                  onChange={(e) => setEditForm({ ...editForm, devido: e.target.value })}
+                                  className="w-20 px-2 py-1 border border-gray-300 rounded-lg text-sm text-right focus:ring-1 focus:ring-blue-500 outline-none"
+                                />
+                              </div>
+                            ) : (
+                              <span className="font-bold text-blue-600 text-sm sm:text-base">
+                                {formatCurrency(devidoValue)}
+                              </span>
+                            )}
+                          </td>
+                        )}
 
                         {/* Column: Pago */}
                         <td className="px-6 py-4 text-right">
@@ -487,42 +546,74 @@ export default function AthleteFinancesPage() {
                         </td>
 
                         {/* Column: Pendente */}
-                        <td className="px-6 py-4 text-right">
-                          <span className={`font-black text-sm sm:text-base ${computedPendente > 0 ? 'text-red-600' : 'text-gray-400'}`}>
-                            {formatCurrency(computedPendente)}
-                          </span>
-                        </td>
-
-                        {/* Actions (Admin Only) */}
                         {isAdmin && (
-                          <td className="px-6 py-4 text-center">
-                            {isEditing ? (
-                              <div className="flex items-center justify-center gap-2">
+                          <td className="px-6 py-4 text-right">
+                            <span className={`font-black text-sm sm:text-base ${computedPendente > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                              {formatCurrency(computedPendente)}
+                            </span>
+                          </td>
+                        )}
+
+                        {/* Actions Column with Confirmed Switch */}
+                        {isAdmin && (
+                          <td className="px-6 py-4 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-2.5">
+                              {/* Switch Button */}
+                              <div className="flex items-center gap-1.5">
                                 <button
-                                  onClick={() => handleSave(athlete.id)}
-                                  className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                  title="Salvar"
+                                  type="button"
+                                  onClick={() => handleToggleConfirmed(athlete.id, !!fin.confirmed)}
+                                  disabled={!isAdmin}
+                                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                    fin.confirmed ? 'bg-emerald-500' : 'bg-gray-300'
+                                  }`}
+                                  title={fin.confirmed ? 'Confirmado (Clique para desligar)' : 'Pendente (Clique para confirmar)'}
                                 >
-                                  <Check className="h-4 w-4" />
+                                  <span
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                      fin.confirmed ? 'translate-x-5' : 'translate-x-0'
+                                    }`}
+                                  />
                                 </button>
-                                <button
-                                  onClick={() => setEditingId(null)}
-                                  className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg border border-red-200 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                  title="Cancelar"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
+
+                                {/* Status Badge: OK in green if ON, OFF if OFF */}
+                                <span className={`text-[11px] font-black px-2 py-0.5 rounded-md border tracking-wider transition-all ${
+                                  fin.confirmed 
+                                    ? 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-xs' 
+                                    : 'bg-gray-100 text-gray-500 border-gray-200'
+                                }`}>
+                                  {fin.confirmed ? 'OK' : 'OFF'}
+                                </span>
                               </div>
-                            ) : (
-                              <button
-                                onClick={() => handleStartEdit(athlete.id, fin)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-[#0069d3] rounded-lg border border-blue-200 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                title="Editar"
-                              >
-                                <Edit2 className="h-3.5 w-3.5" />
-                                <span>Editar</span>
-                              </button>
-                            )}
+
+                              {/* Admin Edit Controls */}
+                              {isEditing ? (
+                                <div className="flex items-center gap-1 ml-1">
+                                  <button
+                                    onClick={() => handleSave(athlete.id)}
+                                    className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title="Salvar"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingId(null)}
+                                    className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg border border-red-200 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title="Cancelar"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleStartEdit(athlete.id, fin)}
+                                  className="p-1.5 text-blue-600 hover:text-white bg-blue-50 hover:bg-[#0069d3] rounded-lg border border-blue-200 transition-all cursor-pointer hover:scale-105 active:scale-95 ml-1"
+                                  title="Editar valores e observações"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         )}
                       </tr>
@@ -530,7 +621,7 @@ export default function AthleteFinancesPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={isAdmin ? 7 : 6} className="px-6 py-12 text-center text-sm text-gray-400 font-medium">
+                    <td colSpan={isAdmin ? 8 : 5} className="px-6 py-12 text-center text-sm text-gray-400 font-medium">
                       Nenhum atleta ativo encontrado.
                     </td>
                   </tr>
